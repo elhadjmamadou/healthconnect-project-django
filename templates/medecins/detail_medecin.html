@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dr. {{ medecin.nom_complet }}{% endblock %}
+{% block page_title %}Profil Médecin{% endblock %}
+{% block page_subtitle %}Dr. {{ medecin.nom_complet }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-sm text-on-surface-variant">
+    <a href="{% url 'medecins:liste' %}" class="hover:text-on-surface transition-colors">Médecins</a>
+    <span class="material-symbols-outlined text-base">chevron_right</span>
+    <span class="text-on-surface">Dr. {{ medecin.nom_complet }}</span>
+  </div>
+
+  <!-- Header -->
+  <div class="glass-panel rounded-2xl p-6">
+    <div class="flex flex-col sm:flex-row sm:items-start gap-5">
+      <div class="w-20 h-20 rounded-2xl bg-primary-container/20 border border-primary-container/30 flex items-center justify-center text-primary-container font-headline font-bold text-2xl flex-shrink-0">
+        {{ medecin.user.first_name|first }}{{ medecin.user.last_name|first }}
+      </div>
+      <div class="flex-1">
+        <div class="flex flex-wrap items-center gap-3 mb-2">
+          <h2 class="font-headline font-bold text-2xl text-on-surface">Dr. {{ medecin.nom_complet }}</h2>
+          <span class="chip-base {% if medecin.user.statut == 'actif' %}chip-success{% else %}chip-error{% endif %}">
+            {{ medecin.user.get_statut_display }}
+          </span>
+          {% if medecin.accepte_nouveaux_patients %}
+          <span class="chip-base chip-success">
+            <span class="material-symbols-outlined text-xs">check_circle</span>
+            Accepte de nouveaux patients
+          </span>
+          {% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2 mb-3">
+          {% for spec in medecin.specialites.all %}
+          <span class="chip-base chip-info">{{ spec.libelle }}</span>
+          {% endfor %}
+        </div>
+        <div class="flex flex-wrap gap-4 text-sm text-on-surface-variant">
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">mail</span>{{ medecin.user.email }}
+          </span>
+          {% if medecin.user.telephone %}
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">phone</span>{{ medecin.user.telephone }}
+          </span>
+          {% endif %}
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">badge</span>N° {{ medecin.numero_ordre }}
+          </span>
+        </div>
+      </div>
+      {% if request.user.is_patient %}
+      <a href="{% url 'rendez_vous:reserver' %}"
+        class="flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-headline font-semibold glow-button whitespace-nowrap self-start">
+        <span class="material-symbols-outlined text-base">event</span>
+        Prendre RDV
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+    <!-- Infos -->
+    <div class="space-y-4">
+
+      <div class="bg-surface-container rounded-2xl p-5">
+        <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-xl">info</span>
+          Informations
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between text-sm">
+            <span class="text-on-surface-variant">Mode d'exercice</span>
+            <span class="text-on-surface font-medium">{{ medecin.get_mode_exercice_display }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-on-surface-variant">Tarif consultation</span>
+            <span class="text-on-surface font-medium">
+              {% if medecin.tarif_consultation %}
+                {{ medecin.tarif_consultation|floatformat:0 }} GNF
+              {% else %}
+                Sur demande
+              {% endif %}
+            </span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-on-surface-variant">Nouveaux patients</span>
+            <span class="font-medium {% if medecin.accepte_nouveaux_patients %}text-secondary{% else %}text-error{% endif %}">
+              {% if medecin.accepte_nouveaux_patients %}Oui{% else %}Non{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-surface-container rounded-2xl p-5">
+        <h3 class="font-headline font-semibold text-on-surface mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary text-xl">local_hospital</span>
+          Spécialités
+        </h3>
+        <div class="flex flex-wrap gap-2">
+          {% for spec in medecin.specialites.all %}
+          <span class="chip-base chip-info">{{ spec.libelle }}</span>
+          {% empty %}
+          <span class="text-sm text-on-surface-variant">Non renseignées</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if medecin.biographie %}
+      <div class="bg-surface-container rounded-2xl p-5">
+        <h3 class="font-headline font-semibold text-on-surface mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-tertiary text-xl">person</span>
+          Biographie
+        </h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed">{{ medecin.biographie }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Agenda & Disponibilités -->
+    <div class="xl:col-span-2 space-y-5">
+
+      <div class="bg-surface-container rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-xl">schedule</span>
+            Prochaines disponibilités
+          </h3>
+        </div>
+        <div class="space-y-2">
+          {% for dispo in medecin.disponibilites.all|slice:":8" %}
+          {% if dispo.est_libre %}
+          <div class="flex items-center gap-3 bg-surface-container-low rounded-xl p-3">
+            <div class="w-9 h-9 rounded-xl bg-secondary/20 flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-secondary text-base">schedule</span>
+            </div>
+            <div class="flex-1">
+              <div class="text-sm font-medium text-on-surface">{{ dispo.date_disponibilite|date:"l d F Y" }}</div>
+              <div class="text-xs text-on-surface-variant">{{ dispo.heure_debut|time:"H:i" }} — {{ dispo.heure_fin|time:"H:i" }}</div>
+            </div>
+            <span class="chip-base chip-success text-xs">{{ dispo.get_type_creneau_display }}</span>
+          </div>
+          {% endif %}
+          {% empty %}
+          <div class="text-center py-8 text-on-surface-variant/40">
+            <span class="material-symbols-outlined text-4xl block mb-2">event_busy</span>
+            <p class="text-sm">Aucune disponibilité</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Derniers RDV (admin/médecin view) -->
+      {% if request.user.is_admin_role or request.user.is_medecin %}
+      <div class="bg-surface-container rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-tertiary text-xl">calendar_today</span>
+            Rendez-vous récents
+          </h3>
+          <a href="{% url 'rendez_vous:liste' %}" class="text-xs text-primary hover:text-primary-container transition-colors font-medium">Voir tout</a>
+        </div>
+        <div class="space-y-2">
+          {% for rdv in medecin.rendez_vous.all|slice:":5" %}
+          <div class="flex items-center gap-3 bg-surface-container-low rounded-xl p-3">
+            <div class="w-9 h-9 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-semibold text-sm flex-shrink-0">
+              {{ rdv.patient.user.first_name|first }}{{ rdv.patient.user.last_name|first }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium text-on-surface">{{ rdv.patient.nom_complet }}</div>
+              <div class="text-xs text-on-surface-variant">{{ rdv.date_rdv|date:"d/m/Y" }} à {{ rdv.heure_debut|time:"H:i" }}</div>
+            </div>
+            <span class="chip-base text-xs
+              {% if rdv.statut_rdv == 'confirme' %}chip-success
+              {% elif rdv.statut_rdv == 'en_attente' %}chip-warning
+              {% elif rdv.statut_rdv == 'termine' %}chip-info
+              {% else %}chip-error{% endif %}">
+              {{ rdv.get_statut_rdv_display }}
+            </span>
+          </div>
+          {% empty %}
+          <div class="text-center py-8 text-on-surface-variant/40 text-sm">Aucun rendez-vous</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

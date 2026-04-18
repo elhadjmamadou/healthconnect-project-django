@@ -16,8 +16,21 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
+from django.views.generic import RedirectView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-]
+    path("users/", include("users.urls", namespace="users")),
+    path("patients/", include("patients.urls", namespace="patients")),
+    path("medecins/", include("medecins.urls", namespace="medecins")),
+    path("rendez-vous/", include("rendez_vous.urls", namespace="rendez_vous")),
+    path("consultations/", include("consultations.urls", namespace="consultations")),
+    path("disponibilites/", include("disponibilites.urls", namespace="disponibilites")),
+    path("paiements/", include("paiements.urls", namespace="paiements")),
+    path("notifications/", include("notifications.urls", namespace="notifications")),
+    path("rapports/", include("rapports.urls", namespace="rapports")),
+    path("", RedirectView.as_view(pattern_name="users:login"), name="home"),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

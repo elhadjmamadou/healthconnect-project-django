@@ -1,8 +1,130 @@
-<aside class="col-md-2 sidebar">
-    <ul>
-        <li><a href="/">Accueil</a></li>
-        <li><a href="/patients/">Patients</a></li>
-        <li><a href="/medecins/">Médecins</a></li>
-        <li><a href="/rendez-vous/">Rendez-vous</a></li>
-    </ul>
-</aside>
+{% load static %}
+<div class="flex flex-col h-full">
+  <!-- Logo -->
+  <div class="p-6 border-b border-outline-variant/10">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center">
+        <span class="material-symbols-outlined text-primary-container text-xl">medical_services</span>
+      </div>
+      <div>
+        <div class="font-headline font-bold text-on-surface text-lg leading-tight">HealthConnect</div>
+        <div class="text-[10px] uppercase tracking-widest text-primary/60">Le Chirurgien Numérique</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+    {% if request.user.is_authenticated %}
+      {% if request.user.is_admin_role or request.user.is_staff %}
+        <!-- Admin nav -->
+        <p class="text-[10px] uppercase tracking-widest text-on-surface-variant/40 px-3 pt-2 pb-1">Administration</p>
+        <a href="{% url 'rapports:dashboard_admin' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm {% if request.resolver_match.url_name == 'dashboard_admin' %}nav-active{% endif %}">
+          <span class="material-symbols-outlined text-xl">dashboard</span>
+          <span>Tableau de bord</span>
+        </a>
+        <a href="{% url 'medecins:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm {% if 'medecins' in request.resolver_match.namespace %}nav-active{% endif %}">
+          <span class="material-symbols-outlined text-xl">medical_services</span>
+          <span>Médecins</span>
+        </a>
+        <a href="{% url 'patients:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm {% if 'patients' in request.resolver_match.namespace %}nav-active{% endif %}">
+          <span class="material-symbols-outlined text-xl">group</span>
+          <span>Patients</span>
+        </a>
+        <a href="{% url 'rendez_vous:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">calendar_today</span>
+          <span>Rendez-vous</span>
+        </a>
+        <a href="{% url 'consultations:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">description</span>
+          <span>Dossiers médicaux</span>
+        </a>
+        <a href="{% url 'paiements:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">payments</span>
+          <span>Paiements</span>
+        </a>
+        <a href="{% url 'rapports:analytiques' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">monitoring</span>
+          <span>Analytiques</span>
+        </a>
+
+      {% elif request.user.is_medecin %}
+        <!-- Médecin nav -->
+        <p class="text-[10px] uppercase tracking-widest text-on-surface-variant/40 px-3 pt-2 pb-1">Espace Médecin</p>
+        <a href="{% url 'medecins:dashboard' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm {% if request.resolver_match.url_name == 'dashboard' %}nav-active{% endif %}">
+          <span class="material-symbols-outlined text-xl">dashboard</span>
+          <span>Tableau de bord</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">calendar_month</span>
+          <span>Mon agenda</span>
+        </a>
+        <a href="{% url 'patients:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">group</span>
+          <span>Mes patients</span>
+        </a>
+        <a href="{% url 'consultations:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">stethoscope</span>
+          <span>Consultations</span>
+        </a>
+        <a href="{% url 'disponibilites:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">schedule</span>
+          <span>Mes disponibilités</span>
+        </a>
+        <a href="{% url 'notifications:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">notifications</span>
+          <span>Notifications</span>
+        </a>
+
+      {% else %}
+        <!-- Patient nav -->
+        <p class="text-[10px] uppercase tracking-widest text-on-surface-variant/40 px-3 pt-2 pb-1">Espace Patient</p>
+        <a href="{% url 'patients:dashboard' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm {% if request.resolver_match.url_name == 'dashboard' %}nav-active{% endif %}">
+          <span class="material-symbols-outlined text-xl">dashboard</span>
+          <span>Tableau de bord</span>
+        </a>
+        <a href="{% url 'rendez_vous:reserver' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">add_circle</span>
+          <span>Prendre RDV</span>
+        </a>
+        <a href="{% url 'rendez_vous:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">event</span>
+          <span>Mes rendez-vous</span>
+        </a>
+        <a href="{% url 'consultations:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">folder_shared</span>
+          <span>Mon dossier médical</span>
+        </a>
+        <a href="{% url 'paiements:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">payments</span>
+          <span>Paiements</span>
+        </a>
+        <a href="{% url 'notifications:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+          <span class="material-symbols-outlined text-xl">notifications</span>
+          <span>Notifications</span>
+        </a>
+      {% endif %}
+    {% endif %}
+  </nav>
+
+  <!-- Bottom nav -->
+  <div class="border-t border-outline-variant/10 p-3 space-y-1">
+    <a href="#" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+      <span class="material-symbols-outlined text-xl">settings</span>
+      <span>Paramètres</span>
+    </a>
+    {% if request.user.is_authenticated %}
+    <a href="#" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
+      <span class="material-symbols-outlined text-xl">account_circle</span>
+      <span class="truncate">{{ request.user.get_full_name|default:request.user.email }}</span>
+    </a>
+    <form method="post" action="{% url 'users:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="nav-item w-full flex items-center gap-3 py-3 px-4 rounded-xl text-sm text-error/60 hover:text-error">
+        <span class="material-symbols-outlined text-xl">logout</span>
+        <span>Déconnexion</span>
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>

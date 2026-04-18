@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord Médecin{% endblock %}
+{% block page_title %}Mon Tableau de Bord{% endblock %}
+{% block page_subtitle %}Espace médecin{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+    <div>
+      <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">
+        Bonjour, Dr. {{ user.get_full_name }} 👋
+      </h2>
+      <p class="text-on-surface-variant text-sm mt-1">{{ today|date:'l j F Y' }}</p>
+    </div>
+    <a href="{% url 'disponibilites:liste' %}"
+      class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-semibold glow-button font-headline">
+      <span class="material-symbols-outlined text-base">schedule</span>
+      Gérer mes disponibilités
+    </a>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="bg-surface-container rounded-2xl p-5 glow-cyan">
+      <div class="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center mb-3">
+        <span class="material-symbols-outlined text-primary">calendar_today</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-primary">{{ stats.rdv_today_count }}</div>
+      <div class="text-on-surface-variant text-xs mt-1">RDV Aujourd'hui</div>
+    </div>
+    <div class="bg-surface-container rounded-2xl p-5 glow-cyan">
+      <div class="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center mb-3">
+        <span class="material-symbols-outlined text-secondary">group</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-secondary">{{ stats.patients_mois }}</div>
+      <div class="text-on-surface-variant text-xs mt-1">Patients ce mois</div>
+    </div>
+    <div class="bg-surface-container rounded-2xl p-5 glow-cyan">
+      <div class="w-10 h-10 rounded-xl bg-tertiary/20 flex items-center justify-center mb-3">
+        <span class="material-symbols-outlined text-tertiary">stethoscope</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-tertiary">{{ stats.consultations_total }}</div>
+      <div class="text-on-surface-variant text-xs mt-1">Consultations totales</div>
+    </div>
+    <div class="bg-surface-container rounded-2xl p-5 glow-cyan">
+      <div class="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center mb-3">
+        <span class="material-symbols-outlined text-primary-container">schedule</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-primary-container">{{ medecin.tarif_consultation }} <span class="text-xs font-normal">GNF</span></div>
+      <div class="text-on-surface-variant text-xs mt-1">Tarif consultation</div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+    <!-- Agenda du jour -->
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-xl">today</span>
+        Agenda du Jour
+      </h3>
+      <div class="space-y-3">
+        {% for rdv in rdv_today %}
+        <div class="flex items-center gap-4 bg-surface-container-low rounded-xl p-4">
+          <div class="text-center flex-shrink-0 w-14">
+            <div class="font-headline font-bold text-primary text-lg leading-tight">{{ rdv.heure_debut|time:"H:i" }}</div>
+            <div class="text-xs text-on-surface-variant">{{ rdv.heure_fin|time:"H:i" }}</div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-on-surface truncate">{{ rdv.patient.nom_complet }}</div>
+            <div class="text-xs text-on-surface-variant truncate">{{ rdv.motif|default:"Consultation générale" }}</div>
+          </div>
+          <span class="chip-base chip-base flex-shrink-0
+            {% if rdv.statut_rdv == 'confirme' %}chip-success
+            {% elif rdv.statut_rdv == 'en_attente' %}chip-warning
+            {% else %}chip-error{% endif %}">
+            {{ rdv.get_statut_rdv_display }}
+          </span>
+        </div>
+        {% empty %}
+        <div class="text-center py-12 text-on-surface-variant/40">
+          <span class="material-symbols-outlined text-5xl block mb-3">calendar_today</span>
+          <p class="text-sm">Aucun rendez-vous aujourd'hui</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Prochains RDV -->
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-xl">upcoming</span>
+        Prochains Rendez-vous
+      </h3>
+      <div class="space-y-3">
+        {% for rdv in prochains_rdv %}
+        <div class="flex items-center gap-3 py-2">
+          <div class="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-semibold text-sm flex-shrink-0">
+            {{ rdv.patient.user.first_name|first }}{{ rdv.patient.user.last_name|first }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-on-surface truncate">{{ rdv.patient.nom_complet }}</div>
+            <div class="text-xs text-on-surface-variant">{{ rdv.date_rdv|date:"d/m/Y" }} à {{ rdv.heure_debut|time:"H:i" }}</div>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-on-surface-variant/40 text-sm text-center py-8">Aucun prochain rendez-vous</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Consultations récentes -->
+  <div class="bg-surface-container rounded-2xl overflow-hidden">
+    <div class="p-6 border-b border-outline-variant/10">
+      <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-tertiary text-xl">description</span>
+        Consultations Récentes
+      </h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="table-header-row">
+          <tr>
+            <th class="text-left px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Patient</th>
+            <th class="text-left px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Date</th>
+            <th class="text-left px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Diagnostic résumé</th>
+            <th class="text-right px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in consultations_recentes %}
+          <tr class="{% if forloop.even %}table-row-even{% else %}table-row-odd{% endif %} transition-colors">
+            <td class="px-6 py-4 text-sm text-on-surface font-medium">{{ c.dossier.patient.nom_complet }}</td>
+            <td class="px-6 py-4 text-sm text-on-surface-variant">{{ c.date_consultation|date:"d/m/Y H:i" }}</td>
+            <td class="px-6 py-4 text-sm text-on-surface-variant">{{ c.diagnostic|truncatechars:60|default:"—" }}</td>
+            <td class="px-6 py-4 text-right">
+              <a href="#" class="text-tertiary text-xs font-medium hover:text-tertiary-container transition-colors">Voir dossier</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="px-6 py-12 text-center text-on-surface-variant/40 text-sm">Aucune consultation</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

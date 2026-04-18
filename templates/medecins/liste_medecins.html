@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Médecins{% endblock %}
+{% block page_title %}Médecins{% endblock %}
+{% block page_subtitle %}Gestion des praticiens{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Gestion des Médecins</h2>
+      <p class="text-on-surface-variant text-sm mt-1">{{ page_obj.paginator.count }} médecin{{ page_obj.paginator.count|pluralize }} enregistré{{ page_obj.paginator.count|pluralize }}</p>
+    </div>
+    <a href="#" class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-semibold glow-button font-headline">
+      <span class="material-symbols-outlined text-base">person_add</span>
+      Ajouter un médecin
+    </a>
+  </div>
+
+  <!-- Filtres -->
+  <form method="get" class="glass-panel rounded-2xl p-4">
+    <div class="flex flex-col sm:flex-row gap-3">
+      <div class="relative flex-1">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40">search</span>
+        <input type="text" name="q" value="{{ q }}"
+          class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl pl-12 pr-4 py-3 text-sm"
+          placeholder="Nom, prénom, numéro d'ordre...">
+      </div>
+      <select name="specialite"
+        class="bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl px-4 py-3 text-sm min-w-[180px]">
+        <option value="">Toutes spécialités</option>
+        {% for s in specialites %}
+        <option value="{{ s.id }}" {% if selected_specialite == s.id|stringformat:"s" %}selected{% endif %}>{{ s.libelle }}</option>
+        {% endfor %}
+      </select>
+      <select name="statut"
+        class="bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl px-4 py-3 text-sm">
+        <option value="">Tous statuts</option>
+        <option value="actif" {% if selected_statut == 'actif' %}selected{% endif %}>Actif</option>
+        <option value="inactif" {% if selected_statut == 'inactif' %}selected{% endif %}>Inactif</option>
+      </select>
+      <button type="submit" class="bg-primary-container text-on-primary-container rounded-xl px-6 py-3 text-sm font-semibold glow-button font-headline whitespace-nowrap">
+        Filtrer
+      </button>
+    </div>
+  </form>
+
+  <!-- Grille médecins -->
+  {% if medecins %}
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    {% for medecin in medecins %}
+    <div class="bg-surface-container rounded-2xl p-6 card-hover flex flex-col gap-4">
+      <!-- Header card -->
+      <div class="flex items-start gap-4">
+        <div class="w-16 h-16 rounded-full bg-primary-container/20 flex items-center justify-center text-primary font-headline font-bold text-xl flex-shrink-0 border border-primary-container/20">
+          {% if medecin.user.photo %}
+            <img src="{{ medecin.user.photo.url }}" class="w-full h-full rounded-full object-cover" alt="">
+          {% else %}
+            {{ medecin.user.first_name|first }}{{ medecin.user.last_name|first }}
+          {% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <h4 class="font-headline font-semibold text-on-surface truncate">Dr. {{ medecin.nom_complet }}</h4>
+          <p class="text-xs text-on-surface-variant mt-0.5">N° ordre : {{ medecin.numero_ordre }}</p>
+          <div class="flex flex-wrap gap-1 mt-2">
+            {% for spec in medecin.specialites.all %}
+            <span class="chip-base chip-success text-[10px] px-2 py-0.5">{{ spec.libelle }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Infos -->
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="font-headline font-bold text-primary text-lg">{{ medecin.tarif_consultation|floatformat:0 }} <span class="text-xs font-normal text-on-surface-variant">GNF</span></div>
+          <div class="text-xs text-on-surface-variant">{{ medecin.get_mode_exercice_display }}</div>
+        </div>
+        <span class="chip-base {% if medecin.user.statut == 'actif' %}chip-success{% else %}chip-error{% endif %}">
+          {{ medecin.user.get_statut_display }}
+        </span>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2 pt-2 border-t border-outline-variant/10">
+        <a href="{% url 'medecins:detail' medecin.pk %}"
+          class="flex-1 text-center bg-surface-container-highest text-primary text-xs font-semibold rounded-xl py-2 hover:bg-surface-container-high transition-colors">
+          Voir profil
+        </a>
+        <a href="#" class="flex-1 text-center bg-surface-container-highest text-on-surface-variant text-xs font-semibold rounded-xl py-2 hover:bg-surface-container-high transition-colors">
+          Modifier
+        </a>
+        <button class="p-2 rounded-xl bg-surface-container-highest text-error/60 hover:text-error hover:bg-error/10 transition-colors">
+          <span class="material-symbols-outlined text-base">delete</span>
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="flex items-center justify-center gap-2">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}"
+      class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high text-sm transition-colors">
+      <span class="material-symbols-outlined text-base">chevron_left</span>
+    </a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    <a href="?page={{ num }}&q={{ q }}"
+      class="px-4 py-2 rounded-xl text-sm transition-colors
+        {% if page_obj.number == num %}bg-primary-container text-on-primary-container{% else %}bg-surface-container text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+      {{ num }}
+    </a>
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&q={{ q }}"
+      class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high text-sm transition-colors">
+      <span class="material-symbols-outlined text-base">chevron_right</span>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="bg-surface-container rounded-2xl p-16 text-center">
+    <span class="material-symbols-outlined text-6xl text-on-surface-variant/20 block mb-4">medical_services</span>
+    <h3 class="font-headline font-semibold text-on-surface mb-2">Aucun médecin trouvé</h3>
+    <p class="text-on-surface-variant text-sm">Essayez de modifier vos filtres de recherche.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

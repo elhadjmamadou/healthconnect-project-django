@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mes Disponibilités{% endblock %}
+{% block page_title %}Disponibilités{% endblock %}
+{% block page_subtitle %}Gérez vos créneaux de consultation{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Mes Disponibilités</h2>
+      <p class="text-on-surface-variant text-sm mt-1">{{ disponibilites|length }} créneau{{ disponibilites|length|pluralize }} configuré{{ disponibilites|length|pluralize }}</p>
+    </div>
+  </div>
+
+  <!-- Stats rapides -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    {% with libres=disponibilites|length %}
+    <div class="bg-secondary/10 border border-secondary/20 rounded-2xl p-5">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="material-symbols-outlined text-secondary">event_available</span>
+        <span class="text-xs text-on-surface-variant uppercase tracking-wide">Libres</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-secondary">
+        {% with count=0 %}
+          {% for d in disponibilites %}{% if d.statut_creneau == 'libre' %}{{ forloop.counter }}{% endif %}{% endfor %}
+        {% endwith %}
+      </div>
+    </div>
+    {% endwith %}
+    <div class="bg-primary-container/10 border border-primary-container/20 rounded-2xl p-5">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="material-symbols-outlined text-primary-container">event_busy</span>
+        <span class="text-xs text-on-surface-variant uppercase tracking-wide">Réservés</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-primary-container">
+        {% for d in disponibilites %}{% if d.statut_creneau == 'reserve' %}{{ forloop.counter }}{% endif %}{% endfor %}
+      </div>
+    </div>
+    <div class="bg-surface-container rounded-2xl p-5">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="material-symbols-outlined text-on-surface-variant">schedule</span>
+        <span class="text-xs text-on-surface-variant uppercase tracking-wide">Total</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-on-surface">{{ disponibilites|length }}</div>
+    </div>
+  </div>
+
+  <!-- Liste créneaux -->
+  <div class="bg-surface-container rounded-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="table-header-row">
+          <tr>
+            <th class="text-left px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Date</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Horaire</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Durée</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Type</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in disponibilites %}
+          <tr class="{% if forloop.even %}table-row-even{% else %}table-row-odd{% endif %} transition-colors">
+            <td class="px-6 py-4">
+              <div class="text-sm font-medium text-on-surface">{{ d.date_disponibilite|date:"l d F Y" }}</div>
+            </td>
+            <td class="px-4 py-4 text-center text-sm text-on-surface-variant">
+              {{ d.heure_debut|time:"H:i" }} — {{ d.heure_fin|time:"H:i" }}
+            </td>
+            <td class="px-4 py-4 text-center text-sm text-on-surface-variant">{{ d.duree_minutes }} min</td>
+            <td class="px-4 py-4 text-center">
+              <span class="chip-base chip-info text-xs">{{ d.get_type_creneau_display }}</span>
+            </td>
+            <td class="px-4 py-4 text-center">
+              <span class="chip-base text-xs
+                {% if d.statut_creneau == 'libre' %}chip-success
+                {% elif d.statut_creneau == 'reserve' %}chip-warning
+                {% else %}chip-error{% endif %}">
+                {{ d.get_statut_creneau_display }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-6 py-16 text-center text-on-surface-variant/40 text-sm">
+              <span class="material-symbols-outlined text-4xl block mb-2">event</span>
+              Aucun créneau configuré
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

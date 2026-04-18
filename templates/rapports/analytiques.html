@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analytiques{% endblock %}
+{% block page_title %}Analytiques & Rapports{% endblock %}
+{% block page_subtitle %}Indicateurs de performance{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Analytiques & Rapports</h2>
+      <p class="text-on-surface-variant text-sm mt-1">Indicateurs de performance de la plateforme</p>
+    </div>
+
+    <!-- Période toggle -->
+    <div class="flex items-center gap-1 bg-surface-container rounded-xl p-1">
+      {% for p in periodes %}
+      <a href="?periode={{ p }}"
+        class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+          {% if periode == p %}bg-primary-container text-on-primary-container{% else %}text-on-surface-variant hover:text-on-surface{% endif %}">
+        {{ p }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Charts 2x2 -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary-container text-xl">trending_up</span>
+        Évolution des Rendez-vous
+      </h3>
+      <div class="relative h-52"><canvas id="rdvChart"></canvas></div>
+    </div>
+
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-xl">payments</span>
+        Revenus Mensuels
+      </h3>
+      <div class="relative h-52"><canvas id="revenusChart"></canvas></div>
+    </div>
+
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-tertiary text-xl">pie_chart</span>
+        Répartition par Spécialité
+      </h3>
+      <div class="relative h-52"><canvas id="specialitesChart"></canvas></div>
+    </div>
+
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-tertiary text-xl">person_add</span>
+        Nouveaux Patients
+      </h3>
+      <div class="relative h-52"><canvas id="patientsChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Tableau médecins -->
+  <div class="bg-surface-container rounded-2xl overflow-hidden">
+    <div class="p-6 flex items-center justify-between border-b border-outline-variant/10">
+      <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-xl">medical_services</span>
+        Statistiques Médecins
+      </h3>
+      <button class="glass-panel flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-on-surface-variant hover:text-on-surface transition-colors">
+        <span class="material-symbols-outlined text-base">download</span>
+        Exporter PDF
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="table-header-row">
+          <tr>
+            <th class="text-left px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Médecin</th>
+            <th class="text-left px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Spécialité</th>
+            <th class="text-center px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">RDV Total</th>
+            <th class="text-center px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Taux occupation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for medecin in stats_medecins %}
+          <tr class="{% if forloop.even %}table-row-even{% else %}table-row-odd{% endif %} transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-primary-container/20 flex items-center justify-center text-primary text-sm font-semibold">
+                  {{ medecin.user.first_name|first }}{{ medecin.user.last_name|first }}
+                </div>
+                <span class="text-sm text-on-surface font-medium">Dr. {{ medecin.nom_complet }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-sm text-on-surface-variant">{{ medecin.specialites_list|join:", "|default:"—" }}</td>
+            <td class="px-6 py-4 text-center text-sm text-on-surface font-medium">{{ medecin.nb_rdv }}</td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <div class="progress-bar w-20">
+                  <div class="progress-fill" style="width: {{ medecin.nb_rdv|default:0 }}%"></div>
+                </div>
+                <span class="text-xs text-secondary">{{ medecin.nb_rdv }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="px-6 py-12 text-center text-on-surface-variant/40 text-sm">Aucune donnée</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ rdv_chart_data|json_script:"rdv-data" }}
+{{ revenus_chart_data|json_script:"revenus-data" }}
+{{ specialites_chart_data|json_script:"spec-data" }}
+{{ patients_chart_data|json_script:"patients-data" }}
+<script>
+Chart.defaults.color = '#bbc9cd';
+Chart.defaults.borderColor = 'rgba(60,73,76,0.2)';
+
+function lineChart(id, data, color) {
+  new Chart(document.getElementById(id), {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        borderColor: color,
+        backgroundColor: (ctx) => {
+          const g = ctx.chart.ctx.createLinearGradient(0,0,0,200);
+          g.addColorStop(0, color.replace(')', ',0.2)').replace('rgb','rgba'));
+          g.addColorStop(1, color.replace(')', ',0)').replace('rgb','rgba'));
+          return g;
+        },
+        fill: true, tension: 0.4, borderWidth: 2,
+        pointBackgroundColor: color, pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: 'rgba(60,73,76,0.2)' } }, y: { beginAtZero: true, grid: { color: 'rgba(60,73,76,0.2)' } } }
+    }
+  });
+}
+
+lineChart('rdvChart', JSON.parse(document.getElementById('rdv-data').textContent), '#22d3ee');
+lineChart('patientsChart', JSON.parse(document.getElementById('patients-data').textContent), '#e4d6ff');
+
+const revenusData = JSON.parse(document.getElementById('revenus-data').textContent);
+new Chart(document.getElementById('revenusChart'), {
+  type: 'bar',
+  data: {
+    labels: revenusData.labels,
+    datasets: [{ data: revenusData.values, backgroundColor: '#4edea3', borderRadius: 6, borderSkipped: false }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(60,73,76,0.2)' } } } }
+});
+
+const specData = JSON.parse(document.getElementById('spec-data').textContent);
+new Chart(document.getElementById('specialitesChart'), {
+  type: 'doughnut',
+  data: {
+    labels: specData.labels,
+    datasets: [{ data: specData.values, backgroundColor: ['#22d3ee','#4edea3','#e4d6ff','#ffb4ab','#8aebff','#cbb5ff'], borderColor: '#1f1f23', borderWidth: 3 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
+});
+</script>
+{% endblock %}

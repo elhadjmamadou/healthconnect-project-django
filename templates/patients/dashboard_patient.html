@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mon Espace{% endblock %}
+{% block page_title %}Mon Espace Santé{% endblock %}
+{% block page_subtitle %}Tableau de bord patient{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header glassmorphic -->
+  <div class="glass-panel rounded-2xl p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="w-16 h-16 rounded-full bg-primary-container/20 border border-primary-container/30 flex items-center justify-center text-primary font-headline font-bold text-2xl flex-shrink-0">
+        {{ user.first_name|first }}{{ user.last_name|first }}
+      </div>
+      <div>
+        <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">
+          Bonjour, {{ user.first_name }} 👋
+        </h2>
+        <div class="flex items-center gap-2 mt-1 flex-wrap">
+          <p class="text-on-surface-variant text-sm">Bienvenue sur votre espace de santé</p>
+          {% if patient.groupe_sanguin %}
+          <span class="chip-base chip-error">
+            <span class="material-symbols-outlined text-xs">bloodtype</span>
+            {{ patient.groupe_sanguin }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-primary-container/10 border border-primary-container/20 rounded-2xl p-6">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-xl bg-primary-container/20 flex items-center justify-center flex-shrink-0">
+          <span class="material-symbols-outlined text-primary-container">event</span>
+        </div>
+        <div class="min-w-0">
+          <div class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Prochain RDV</div>
+          {% if prochain_rdv %}
+          <div class="font-headline font-bold text-on-surface">{{ prochain_rdv.date_rdv|date:"d/m/Y" }}</div>
+          <div class="text-xs text-on-surface-variant truncate">Dr. {{ prochain_rdv.medecin.nom_complet }}</div>
+          {% else %}
+          <div class="text-on-surface-variant text-sm">Aucun à venir</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-surface-container rounded-2xl p-6 glow-cyan">
+      <div class="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center mb-3">
+        <span class="material-symbols-outlined text-secondary">calendar_today</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-secondary">{{ stats.rdv_annee }}</div>
+      <div class="text-on-surface-variant text-xs mt-1">RDV cette année</div>
+    </div>
+
+    <div class="bg-surface-container rounded-2xl p-6 glow-cyan">
+      <div class="w-10 h-10 rounded-xl bg-tertiary/20 flex items-center justify-center mb-3">
+        <span class="material-symbols-outlined text-tertiary">stethoscope</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-tertiary">{{ stats.consultations }}</div>
+      <div class="text-on-surface-variant text-xs mt-1">Consultations</div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+    <!-- Prochain RDV detail -->
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-xl">event_available</span>
+        Mon Prochain Rendez-vous
+      </h3>
+      {% if prochain_rdv %}
+      <div class="glass-panel rounded-2xl p-5 space-y-4">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-full bg-primary-container/20 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0">
+            {{ prochain_rdv.medecin.user.first_name|first }}{{ prochain_rdv.medecin.user.last_name|first }}
+          </div>
+          <div>
+            <div class="font-headline font-semibold text-on-surface">Dr. {{ prochain_rdv.medecin.nom_complet }}</div>
+            <div class="text-xs text-on-surface-variant">{{ prochain_rdv.medecin.specialites_list|join:", "|default:"Médecin généraliste" }}</div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-surface-container-lowest rounded-xl p-3">
+            <div class="text-xs text-on-surface-variant mb-1">Date</div>
+            <div class="font-headline font-semibold text-on-surface text-sm">{{ prochain_rdv.date_rdv|date:"d F Y" }}</div>
+          </div>
+          <div class="bg-surface-container-lowest rounded-xl p-3">
+            <div class="text-xs text-on-surface-variant mb-1">Heure</div>
+            <div class="font-headline font-semibold text-on-surface text-sm">{{ prochain_rdv.heure_debut|time:"H:i" }}</div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button class="flex-1 bg-error/10 text-error border border-error/20 rounded-xl py-2.5 text-sm font-semibold font-headline hover:bg-error/20 transition-colors">
+            Annuler
+          </button>
+          <a href="#" class="flex-1 text-center bg-surface-container-highest text-on-surface-variant rounded-xl py-2.5 text-sm font-semibold font-headline hover:bg-surface-container-high transition-colors">
+            Voir détails
+          </a>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center py-12 text-on-surface-variant/40">
+        <span class="material-symbols-outlined text-5xl block mb-3">calendar_today</span>
+        <p class="text-sm mb-4">Aucun rendez-vous prévu</p>
+        <a href="{% url 'rendez_vous:reserver' %}"
+          class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-semibold glow-button font-headline">
+          <span class="material-symbols-outlined text-base">add_circle</span>
+          Prendre un RDV
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- CTA Nouveau RDV -->
+    <div class="bg-surface-container rounded-2xl p-6 flex flex-col justify-between">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-xl">add_circle</span>
+        Prendre un Nouveau RDV
+      </h3>
+      <div class="flex-1 flex flex-col items-center justify-center py-8 text-center">
+        <div class="w-20 h-20 rounded-2xl bg-primary-container/10 border border-primary-container/20 flex items-center justify-center mb-6">
+          <span class="material-symbols-outlined text-primary-container" style="font-size:2.5rem">add_circle</span>
+        </div>
+        <p class="text-on-surface-variant text-sm mb-6 max-w-xs">Consultez la liste de nos médecins et réservez votre créneau en quelques secondes.</p>
+        <a href="{% url 'rendez_vous:reserver' %}"
+          class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-6 py-3 font-headline font-semibold text-sm glow-button w-full justify-center">
+          <span class="material-symbols-outlined text-base">search</span>
+          Trouver un médecin
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Consultations récentes -->
+  <div class="bg-surface-container rounded-2xl p-6">
+    <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+      <span class="material-symbols-outlined text-tertiary text-xl">description</span>
+      Mes Dernières Consultations
+    </h3>
+    <div class="space-y-3">
+      {% for c in consultations_recentes %}
+      <div class="flex items-center gap-4 bg-surface-container-low rounded-xl p-4">
+        <div class="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-semibold text-sm flex-shrink-0">
+          {{ c.medecin.user.first_name|first|default:"?" }}{{ c.medecin.user.last_name|first|default:"" }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium text-on-surface">Dr. {{ c.medecin.nom_complet }}</div>
+          <div class="text-xs text-on-surface-variant">{{ c.date_consultation|date:"d/m/Y" }} — {{ c.diagnostic|truncatechars:50|default:"Aucun diagnostic" }}</div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-center py-8 text-on-surface-variant/40">
+        <span class="material-symbols-outlined text-4xl block mb-2">stethoscope</span>
+        <p class="text-sm">Aucune consultation enregistrée</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

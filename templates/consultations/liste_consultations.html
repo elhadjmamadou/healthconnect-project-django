@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Consultations{% endblock %}
+{% block page_title %}Consultations{% endblock %}
+{% block page_subtitle %}Historique de toutes les consultations{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Consultations</h2>
+      <p class="text-on-surface-variant text-sm mt-1">{{ page_obj.paginator.count }} consultation{{ page_obj.paginator.count|pluralize }}</p>
+    </div>
+  </div>
+
+  <!-- Liste -->
+  <div class="bg-surface-container rounded-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="table-header-row">
+          <tr>
+            <th class="text-left px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Patient</th>
+            <th class="text-left px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Médecin</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Date</th>
+            <th class="text-left px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Diagnostic</th>
+            <th class="text-right px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Dossier</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in consultations %}
+          <tr class="{% if forloop.even %}table-row-even{% else %}table-row-odd{% endif %} transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-semibold text-sm flex-shrink-0">
+                  {{ c.dossier.patient.user.first_name|first }}{{ c.dossier.patient.user.last_name|first }}
+                </div>
+                <div>
+                  <div class="text-sm font-medium text-on-surface">{{ c.dossier.patient.nom_complet }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="text-sm text-on-surface">Dr. {{ c.medecin.nom_complet }}</div>
+            </td>
+            <td class="px-4 py-4 text-center text-sm text-on-surface-variant">{{ c.date_consultation|date:"d/m/Y" }}</td>
+            <td class="px-4 py-4 text-sm text-on-surface-variant max-w-xs">
+              {{ c.diagnostic|truncatechars:60|default:"—" }}
+            </td>
+            <td class="px-6 py-4 text-right">
+              <a href="{% url 'consultations:dossier' c.dossier.pk %}"
+                class="text-primary text-xs font-medium hover:text-primary-container transition-colors">Voir dossier</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-6 py-16 text-center text-on-surface-variant/40 text-sm">
+              <span class="material-symbols-outlined text-4xl block mb-2">stethoscope</span>
+              Aucune consultation enregistrée
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="flex items-center justify-center gap-2">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-sm">
+      <span class="material-symbols-outlined text-base">chevron_left</span>
+    </a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    <a href="?page={{ num }}" class="px-4 py-2 rounded-xl text-sm {% if page_obj.number == num %}bg-primary-container text-on-primary-container{% else %}bg-surface-container text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+      {{ num }}
+    </a>
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-sm">
+      <span class="material-symbols-outlined text-base">chevron_right</span>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

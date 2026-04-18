@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paiements{% endblock %}
+{% block page_title %}Paiements{% endblock %}
+{% block page_subtitle %}Suivi des transactions{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div>
+    <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Paiements</h2>
+    <p class="text-on-surface-variant text-sm mt-1">Suivi des transactions du mois en cours</p>
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-secondary/10 border border-secondary/20 rounded-2xl p-5">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="material-symbols-outlined text-secondary">payments</span>
+        <span class="text-xs text-on-surface-variant uppercase tracking-wide">Encaissé (mois)</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-secondary">{{ kpi.total_encaisse|floatformat:0 }} GNF</div>
+    </div>
+    <div class="bg-primary-container/10 border border-primary-container/20 rounded-2xl p-5">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="material-symbols-outlined text-primary-container">hourglass_empty</span>
+        <span class="text-xs text-on-surface-variant uppercase tracking-wide">En attente</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-primary-container">{{ kpi.en_attente }}</div>
+    </div>
+    <div class="bg-error/10 border border-error/20 rounded-2xl p-5">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="material-symbols-outlined text-error">error_outline</span>
+        <span class="text-xs text-on-surface-variant uppercase tracking-wide">Échoués</span>
+      </div>
+      <div class="font-headline font-bold text-2xl text-error">{{ kpi.echoues }}</div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <form method="get" class="glass-panel rounded-2xl p-4">
+    <div class="flex flex-col sm:flex-row gap-3">
+      <select name="statut" class="bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl px-4 py-3 text-sm">
+        <option value="">Tous les statuts</option>
+        <option value="confirme" {% if selected_statut == 'confirme' %}selected{% endif %}>Confirmé</option>
+        <option value="en_attente" {% if selected_statut == 'en_attente' %}selected{% endif %}>En attente</option>
+        <option value="initie" {% if selected_statut == 'initie' %}selected{% endif %}>Initié</option>
+        <option value="echoue" {% if selected_statut == 'echoue' %}selected{% endif %}>Échoué</option>
+        <option value="rembourse" {% if selected_statut == 'rembourse' %}selected{% endif %}>Remboursé</option>
+      </select>
+      <select name="mode" class="bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl px-4 py-3 text-sm">
+        <option value="">Tous les modes</option>
+        <option value="orange_money" {% if selected_mode == 'orange_money' %}selected{% endif %}>Orange Money</option>
+        <option value="mtn_money" {% if selected_mode == 'mtn_money' %}selected{% endif %}>MTN Money</option>
+        <option value="wave" {% if selected_mode == 'wave' %}selected{% endif %}>Wave</option>
+        <option value="carte_bancaire" {% if selected_mode == 'carte_bancaire' %}selected{% endif %}>Carte bancaire</option>
+        <option value="especes" {% if selected_mode == 'especes' %}selected{% endif %}>Espèces</option>
+      </select>
+      <button type="submit" class="bg-primary-container text-on-primary-container rounded-xl px-6 py-3 text-sm font-semibold glow-button font-headline">
+        Filtrer
+      </button>
+      {% if selected_statut or selected_mode %}
+      <a href="{% url 'paiements:liste' %}" class="bg-surface-container text-on-surface-variant rounded-xl px-4 py-3 text-sm hover:bg-surface-container-high transition-colors text-center">
+        Réinitialiser
+      </a>
+      {% endif %}
+    </div>
+  </form>
+
+  <!-- Tableau -->
+  <div class="bg-surface-container rounded-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="table-header-row">
+          <tr>
+            <th class="text-left px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Référence</th>
+            <th class="text-left px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Patient</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Montant</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Mode</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Date</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Statut</th>
+            <th class="text-right px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Détail</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in paiements %}
+          <tr class="{% if forloop.even %}table-row-even{% else %}table-row-odd{% endif %} transition-colors">
+            <td class="px-6 py-4">
+              <div class="text-xs font-mono text-primary-container">{{ p.reference_interne }}</div>
+            </td>
+            <td class="px-4 py-4">
+              {% if p.rendez_vous %}
+              <div class="text-sm font-medium text-on-surface">{{ p.rendez_vous.patient.nom_complet }}</div>
+              <div class="text-xs text-on-surface-variant">RDV {{ p.rendez_vous.date_rdv|date:"d/m/Y" }}</div>
+              {% else %}
+              <span class="text-on-surface-variant/40 text-sm">—</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-4 text-center">
+              <span class="font-headline font-semibold text-on-surface">{{ p.montant|floatformat:0 }}</span>
+              <span class="text-xs text-on-surface-variant ml-1">{{ p.devise }}</span>
+            </td>
+            <td class="px-4 py-4 text-center">
+              <span class="chip-base chip-info text-xs">{{ p.get_mode_paiement_display }}</span>
+            </td>
+            <td class="px-4 py-4 text-center text-sm text-on-surface-variant">
+              {{ p.date_creation|date:"d/m/Y" }}
+            </td>
+            <td class="px-4 py-4 text-center">
+              <span class="chip-base text-xs
+                {% if p.statut_paiement == 'confirme' %}chip-success
+                {% elif p.statut_paiement in 'en_attente,initie' %}chip-warning
+                {% elif p.statut_paiement == 'rembourse' %}chip-info
+                {% else %}chip-error{% endif %}">
+                {{ p.get_statut_paiement_display }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <a href="{% url 'paiements:detail' p.pk %}" class="text-primary text-xs font-medium hover:text-primary-container transition-colors">Voir</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-6 py-16 text-center text-on-surface-variant/40 text-sm">
+              <span class="material-symbols-outlined text-4xl block mb-2">payments</span>
+              Aucun paiement trouvé
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="flex items-center justify-center gap-2">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&statut={{ selected_statut }}&mode={{ selected_mode }}" class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-sm">
+      <span class="material-symbols-outlined text-base">chevron_left</span>
+    </a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    <a href="?page={{ num }}&statut={{ selected_statut }}&mode={{ selected_mode }}" class="px-4 py-2 rounded-xl text-sm {% if page_obj.number == num %}bg-primary-container text-on-primary-container{% else %}bg-surface-container text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+      {{ num }}
+    </a>
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&statut={{ selected_statut }}&mode={{ selected_mode }}" class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-sm">
+      <span class="material-symbols-outlined text-base">chevron_right</span>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

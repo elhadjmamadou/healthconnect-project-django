@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Prendre un Rendez-vous{% endblock %}
+{% block page_title %}Prise de Rendez-vous{% endblock %}
+{% block page_subtitle %}Réservez votre créneau en 3 étapes{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-4xl mx-auto">
+
+  <!-- Stepper -->
+  <div class="glass-panel rounded-2xl p-6">
+    <div class="flex items-center gap-0">
+      {% for s_num, s_label in "1,Médecin|2,Créneau|3,Confirmation"|split:"|" %}
+      {% endfor %}
+      <!-- Step 1 -->
+      <div class="flex items-center flex-1">
+        <div class="flex flex-col items-center">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-headline
+            {% if step > 1 %}bg-secondary text-on-secondary
+            {% elif step == 1 %}bg-primary-container text-on-primary-container
+            {% else %}bg-surface-container-high text-on-surface-variant{% endif %}">
+            {% if step > 1 %}<span class="material-symbols-outlined text-base">check</span>{% else %}1{% endif %}
+          </div>
+          <span class="text-xs mt-1 {% if step == 1 %}text-on-surface{% else %}text-on-surface-variant/50{% endif %} hidden sm:block">Médecin</span>
+        </div>
+        <div class="flex-1 h-0.5 mx-2 {% if step > 1 %}bg-secondary{% else %}bg-outline-variant/20{% endif %}"></div>
+      </div>
+      <!-- Step 2 -->
+      <div class="flex items-center flex-1">
+        <div class="flex flex-col items-center">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-headline
+            {% if step > 2 %}bg-secondary text-on-secondary
+            {% elif step == 2 %}bg-primary-container text-on-primary-container
+            {% else %}bg-surface-container-high text-on-surface-variant{% endif %}">
+            {% if step > 2 %}<span class="material-symbols-outlined text-base">check</span>{% else %}2{% endif %}
+          </div>
+          <span class="text-xs mt-1 {% if step == 2 %}text-on-surface{% else %}text-on-surface-variant/50{% endif %} hidden sm:block">Créneau</span>
+        </div>
+        <div class="flex-1 h-0.5 mx-2 {% if step > 2 %}bg-secondary{% else %}bg-outline-variant/20{% endif %}"></div>
+      </div>
+      <!-- Step 3 -->
+      <div class="flex items-center">
+        <div class="flex flex-col items-center">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-headline
+            {% if step == 3 %}bg-primary-container text-on-primary-container
+            {% else %}bg-surface-container-high text-on-surface-variant{% endif %}">
+            3
+          </div>
+          <span class="text-xs mt-1 {% if step == 3 %}text-on-surface{% else %}text-on-surface-variant/50{% endif %} hidden sm:block">Confirmation</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Étape 1 : Choisir un médecin -->
+  {% if step == 1 %}
+  <div class="space-y-4">
+    <h2 class="font-headline font-bold text-2xl text-on-surface">Choisissez un médecin</h2>
+
+    <!-- Filtres -->
+    <form method="get" class="glass-panel rounded-2xl p-4">
+      <input type="hidden" name="step" value="1">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40">search</span>
+          <input type="text" name="q" value="{{ q }}"
+            class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl pl-12 pr-4 py-3 text-sm"
+            placeholder="Nom du médecin...">
+        </div>
+        <select name="specialite" class="bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl px-4 py-3 text-sm">
+          <option value="">Toutes spécialités</option>
+          {% for spec in specialites %}
+          <option value="{{ spec.pk }}" {% if spec_filter == spec.pk|stringformat:"s" %}selected{% endif %}>{{ spec.libelle }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-headline font-semibold glow-button">
+          Chercher
+        </button>
+      </div>
+    </form>
+
+    <!-- Grille médecins -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {% for m in medecins %}
+      <div class="glass-panel rounded-2xl p-5">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary-container font-bold text-lg flex-shrink-0">
+            {{ m.user.first_name|first }}{{ m.user.last_name|first }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-headline font-semibold text-on-surface">Dr. {{ m.nom_complet }}</div>
+            <div class="flex flex-wrap gap-1 my-1">
+              {% for spec in m.specialites.all %}
+              <span class="chip-base chip-info text-xs">{{ spec.libelle }}</span>
+              {% endfor %}
+            </div>
+            {% if m.tarif_consultation %}
+            <div class="text-xs text-on-surface-variant">{{ m.tarif_consultation|floatformat:0 }} GNF / consultation</div>
+            {% endif %}
+          </div>
+        </div>
+        <form method="post" class="mt-4">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="select_medecin">
+          <input type="hidden" name="medecin_id" value="{{ m.pk }}">
+          <button type="submit"
+            class="w-full bg-primary-container text-on-primary-container rounded-xl py-2.5 text-sm font-headline font-semibold glow-button transition-all">
+            Choisir ce médecin
+          </button>
+        </form>
+      </div>
+      {% empty %}
+      <div class="sm:col-span-2 glass-panel rounded-2xl p-12 text-center text-on-surface-variant/40">
+        <span class="material-symbols-outlined text-5xl block mb-3">search_off</span>
+        <p class="text-sm">Aucun médecin trouvé</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Étape 2 : Choisir un créneau -->
+  {% elif step == 2 %}
+  <div class="space-y-4">
+    <div class="flex items-center gap-4">
+      <a href="?step=1" class="p-2 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </a>
+      <h2 class="font-headline font-bold text-2xl text-on-surface">Choisissez un créneau</h2>
+    </div>
+
+    {% if medecin %}
+    <div class="glass-panel rounded-2xl p-5 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary-container font-bold text-lg flex-shrink-0">
+        {{ medecin.user.first_name|first }}{{ medecin.user.last_name|first }}
+      </div>
+      <div>
+        <div class="font-headline font-semibold text-on-surface">Dr. {{ medecin.nom_complet }}</div>
+        <div class="text-xs text-on-surface-variant">{{ medecin.specialites_list|join:", " }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="space-y-3">
+      {% for dispo in disponibilites %}
+      <div class="glass-panel rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center flex-shrink-0">
+          <span class="material-symbols-outlined text-secondary">schedule</span>
+        </div>
+        <div class="flex-1">
+          <div class="font-headline font-semibold text-on-surface">{{ dispo.date_disponibilite|date:"l d F Y" }}</div>
+          <div class="text-sm text-on-surface-variant">{{ dispo.heure_debut|time:"H:i" }} — {{ dispo.heure_fin|time:"H:i" }} ({{ dispo.duree_minutes }} min)</div>
+        </div>
+        <span class="chip-base chip-success text-xs">{{ dispo.get_type_creneau_display }}</span>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="select_dispo">
+          <input type="hidden" name="dispo_id" value="{{ dispo.pk }}">
+          <button type="submit"
+            class="bg-primary-container text-on-primary-container rounded-xl px-5 py-2.5 text-sm font-headline font-semibold glow-button whitespace-nowrap">
+            Sélectionner
+          </button>
+        </form>
+      </div>
+      {% empty %}
+      <div class="glass-panel rounded-2xl p-12 text-center text-on-surface-variant/40">
+        <span class="material-symbols-outlined text-5xl block mb-3">event_busy</span>
+        <p class="text-sm">Aucun créneau disponible pour ce médecin</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Étape 3 : Confirmation -->
+  {% elif step == 3 %}
+  <div class="space-y-4">
+    <div class="flex items-center gap-4">
+      <a href="?step=2" class="p-2 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </a>
+      <h2 class="font-headline font-bold text-2xl text-on-surface">Confirmez votre RDV</h2>
+    </div>
+
+    {% if dispo %}
+    <div class="glass-panel rounded-2xl p-6 space-y-5">
+
+      <!-- Résumé -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-surface-container-low rounded-xl p-4">
+          <div class="text-xs text-on-surface-variant mb-2">Médecin</div>
+          <div class="font-headline font-semibold text-on-surface">Dr. {{ medecin.nom_complet }}</div>
+          <div class="text-xs text-on-surface-variant">{{ medecin.specialites_list|join:", " }}</div>
+        </div>
+        <div class="bg-surface-container-low rounded-xl p-4">
+          <div class="text-xs text-on-surface-variant mb-2">Créneau</div>
+          <div class="font-headline font-semibold text-on-surface">{{ dispo.date_disponibilite|date:"d F Y" }}</div>
+          <div class="text-xs text-on-surface-variant">{{ dispo.heure_debut|time:"H:i" }} — {{ dispo.heure_fin|time:"H:i" }}</div>
+        </div>
+      </div>
+
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="confirmer">
+
+        <div>
+          <label class="block text-sm font-medium text-on-surface-variant mb-2">Motif de la consultation</label>
+          <textarea name="motif" rows="3"
+            class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl px-4 py-3 text-sm resize-none"
+            placeholder="Décrivez brièvement le motif de votre consultation..."></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-on-surface-variant mb-2">Type de consultation</label>
+          <div class="grid grid-cols-3 gap-3">
+            {% for value, label in canal_options %}
+            <label class="cursor-pointer">
+              <input type="radio" name="canal" value="{{ value }}" class="sr-only" {% if value == 'plateforme' %}checked{% endif %}>
+              <div class="canal-option bg-surface-container-low border border-outline-variant/20 rounded-xl p-3 text-center text-sm font-medium text-on-surface-variant hover:border-primary-container/50 transition-all">
+                {{ label }}
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        {% if medecin.tarif_consultation %}
+        <div class="flex items-center justify-between bg-primary-container/10 border border-primary-container/20 rounded-xl p-4">
+          <span class="text-sm text-on-surface-variant">Tarif estimé</span>
+          <span class="font-headline font-bold text-primary-container text-lg">{{ medecin.tarif_consultation|floatformat:0 }} GNF</span>
+        </div>
+        {% endif %}
+
+        <button type="submit"
+          class="w-full bg-primary-container text-on-primary-container rounded-xl py-4 font-headline font-semibold text-sm glow-button">
+          Confirmer le rendez-vous
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Stepper info — passed as context variable if needed
+const stepsInfo = [
+  [1, 'Médecin'],
+  [2, 'Créneau'],
+  [3, 'Confirmation'],
+];
+
+// Radio canal visual toggle
+document.querySelectorAll('input[name="canal"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.querySelectorAll('.canal-option').forEach(el => {
+      el.classList.remove('border-primary-container', 'text-on-surface', 'bg-primary-container/10');
+    });
+    if (radio.checked) {
+      radio.nextElementSibling.classList.add('border-primary-container', 'text-on-surface', 'bg-primary-container/10');
+    }
+  });
+  if (radio.checked) {
+    radio.nextElementSibling.classList.add('border-primary-container', 'text-on-surface', 'bg-primary-container/10');
+  }
+});
+</script>
+{% endblock %}

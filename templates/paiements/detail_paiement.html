@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Paiement {{ paiement.reference_interne }}{% endblock %}
+{% block page_title %}Détail Paiement{% endblock %}
+{% block page_subtitle %}{{ paiement.reference_interne }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-2xl mx-auto">
+
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-sm text-on-surface-variant">
+    <a href="{% url 'paiements:liste' %}" class="hover:text-on-surface transition-colors">Paiements</a>
+    <span class="material-symbols-outlined text-base">chevron_right</span>
+    <span class="text-on-surface">{{ paiement.reference_interne }}</span>
+  </div>
+
+  <!-- Statut principal -->
+  <div class="glass-panel rounded-2xl p-8 text-center">
+    <div class="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center
+      {% if paiement.statut_paiement == 'confirme' %}bg-secondary/20
+      {% elif paiement.statut_paiement in 'en_attente,initie' %}bg-primary-container/20
+      {% else %}bg-error/20{% endif %}">
+      <span class="material-symbols-outlined text-4xl
+        {% if paiement.statut_paiement == 'confirme' %}text-secondary
+        {% elif paiement.statut_paiement in 'en_attente,initie' %}text-primary-container
+        {% else %}text-error{% endif %}">
+        {% if paiement.statut_paiement == 'confirme' %}check_circle
+        {% elif paiement.statut_paiement in 'en_attente,initie' %}hourglass_empty
+        {% elif paiement.statut_paiement == 'rembourse' %}currency_exchange
+        {% else %}cancel{% endif %}
+      </span>
+    </div>
+    <div class="font-headline font-bold text-4xl text-on-surface mb-1">
+      {{ paiement.montant|floatformat:0 }} {{ paiement.devise }}
+    </div>
+    <span class="chip-base text-sm
+      {% if paiement.statut_paiement == 'confirme' %}chip-success
+      {% elif paiement.statut_paiement in 'en_attente,initie' %}chip-warning
+      {% elif paiement.statut_paiement == 'rembourse' %}chip-info
+      {% else %}chip-error{% endif %}">
+      {{ paiement.get_statut_paiement_display }}
+    </span>
+  </div>
+
+  <!-- Détails -->
+  <div class="bg-surface-container rounded-2xl p-6 space-y-4">
+    <h3 class="font-headline font-semibold text-on-surface mb-4">Informations de la transaction</h3>
+
+    <div class="space-y-3">
+      <div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+        <span class="text-sm text-on-surface-variant">Référence interne</span>
+        <span class="text-sm font-mono text-primary-container font-medium">{{ paiement.reference_interne }}</span>
+      </div>
+      {% if paiement.reference_djomy %}
+      <div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+        <span class="text-sm text-on-surface-variant">Référence Djomy</span>
+        <span class="text-sm font-mono text-on-surface">{{ paiement.reference_djomy }}</span>
+      </div>
+      {% endif %}
+      <div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+        <span class="text-sm text-on-surface-variant">Mode de paiement</span>
+        <span class="chip-base chip-info text-xs">{{ paiement.get_mode_paiement_display }}</span>
+      </div>
+      <div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+        <span class="text-sm text-on-surface-variant">Date de création</span>
+        <span class="text-sm text-on-surface">{{ paiement.date_creation|date:"d/m/Y à H:i" }}</span>
+      </div>
+      {% if paiement.date_paiement %}
+      <div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+        <span class="text-sm text-on-surface-variant">Date de paiement</span>
+        <span class="text-sm text-on-surface">{{ paiement.date_paiement|date:"d/m/Y à H:i" }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Rendez-vous lié -->
+  {% if paiement.rendez_vous %}
+  <div class="bg-surface-container rounded-2xl p-6">
+    <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary text-xl">event</span>
+      Rendez-vous associé
+    </h3>
+    <div class="bg-surface-container-low rounded-xl p-4 space-y-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary font-semibold text-sm">
+          {{ paiement.rendez_vous.patient.user.first_name|first }}{{ paiement.rendez_vous.patient.user.last_name|first }}
+        </div>
+        <div>
+          <div class="text-sm font-medium text-on-surface">{{ paiement.rendez_vous.patient.nom_complet }}</div>
+          <div class="text-xs text-on-surface-variant">Patient</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <span class="text-on-surface-variant text-xs">Médecin</span>
+          <p class="text-on-surface font-medium">Dr. {{ paiement.rendez_vous.medecin.nom_complet }}</p>
+        </div>
+        <div>
+          <span class="text-on-surface-variant text-xs">Date RDV</span>
+          <p class="text-on-surface font-medium">{{ paiement.rendez_vous.date_rdv|date:"d/m/Y" }} à {{ paiement.rendez_vous.heure_debut|time:"H:i" }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Retour -->
+  <a href="{% url 'paiements:liste' %}"
+    class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface text-sm transition-colors">
+    <span class="material-symbols-outlined text-base">arrow_back</span>
+    Retour à la liste
+  </a>
+
+</div>
+{% endblock %}

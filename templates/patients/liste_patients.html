@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Patients{% endblock %}
+{% block page_title %}Patients{% endblock %}
+{% block page_subtitle %}Gestion des dossiers patients{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Gestion des Patients</h2>
+      <p class="text-on-surface-variant text-sm mt-1">{{ page_obj.paginator.count }} patient{{ page_obj.paginator.count|pluralize }} enregistré{{ page_obj.paginator.count|pluralize }}</p>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <form method="get" class="glass-panel rounded-2xl p-4">
+    <div class="flex flex-col sm:flex-row gap-3">
+      <div class="relative flex-1">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40">search</span>
+        <input type="text" name="q" value="{{ q }}"
+          class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl pl-12 pr-4 py-3 text-sm"
+          placeholder="Nom, prénom, email...">
+      </div>
+      <select name="sexe" class="bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl px-4 py-3 text-sm">
+        <option value="">Tous sexes</option>
+        <option value="M" {% if selected_sexe == 'M' %}selected{% endif %}>Masculin</option>
+        <option value="F" {% if selected_sexe == 'F' %}selected{% endif %}>Féminin</option>
+        <option value="autre" {% if selected_sexe == 'autre' %}selected{% endif %}>Autre</option>
+      </select>
+      <select name="statut" class="bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-xl px-4 py-3 text-sm">
+        <option value="">Tous statuts</option>
+        <option value="actif" {% if selected_statut == 'actif' %}selected{% endif %}>Actif</option>
+        <option value="inactif" {% if selected_statut == 'inactif' %}selected{% endif %}>Inactif</option>
+      </select>
+      <button type="submit" class="bg-primary-container text-on-primary-container rounded-xl px-6 py-3 text-sm font-semibold glow-button font-headline whitespace-nowrap">
+        Filtrer
+      </button>
+    </div>
+  </form>
+
+  <!-- Tableau -->
+  <div class="bg-surface-container rounded-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="table-header-row">
+          <tr>
+            <th class="text-left px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Patient</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Âge</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Groupe sang.</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">RDV</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Statut</th>
+            <th class="text-right px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for patient in patients %}
+          <tr class="{% if forloop.even %}table-row-even{% else %}table-row-odd{% endif %} transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-semibold text-sm flex-shrink-0">
+                  {{ patient.user.first_name|first }}{{ patient.user.last_name|first }}
+                </div>
+                <div>
+                  <div class="text-sm font-medium text-on-surface">{{ patient.nom_complet }}</div>
+                  <div class="text-xs text-on-surface-variant">{{ patient.user.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-4 text-center text-sm text-on-surface-variant">{{ patient.age|default:"—" }}</td>
+            <td class="px-4 py-4 text-center">
+              {% if patient.groupe_sanguin %}
+              <span class="chip-base chip-error text-xs">{{ patient.groupe_sanguin }}</span>
+              {% else %}
+              <span class="text-on-surface-variant/40 text-xs">—</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-4 text-center text-sm text-on-surface font-medium">{{ patient.nb_rdv }}</td>
+            <td class="px-4 py-4 text-center">
+              <span class="chip-base {% if patient.user.statut == 'actif' %}chip-success{% else %}chip-error{% endif %}">
+                {{ patient.user.get_statut_display }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <a href="{% url 'patients:detail' patient.pk %}" class="text-primary text-xs font-medium hover:text-primary-container transition-colors">Dossier</a>
+                <a href="{% url 'rendez_vous:reserver' %}" class="text-secondary text-xs font-medium hover:text-secondary-container transition-colors">RDV</a>
+                <button class="p-1 text-on-surface-variant/40 hover:text-on-surface-variant rounded-lg">
+                  <span class="material-symbols-outlined text-base">more_horiz</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="px-6 py-16 text-center text-on-surface-variant/40 text-sm">
+            <span class="material-symbols-outlined text-4xl block mb-2">group</span>
+            Aucun patient trouvé
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="flex items-center justify-center gap-2">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}" class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-sm">
+      <span class="material-symbols-outlined text-base">chevron_left</span>
+    </a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    <a href="?page={{ num }}&q={{ q }}" class="px-4 py-2 rounded-xl text-sm {% if page_obj.number == num %}bg-primary-container text-on-primary-container{% else %}bg-surface-container text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+      {{ num }}
+    </a>
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&q={{ q }}" class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-sm">
+      <span class="material-symbols-outlined text-base">chevron_right</span>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

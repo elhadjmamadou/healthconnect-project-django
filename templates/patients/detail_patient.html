@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dossier — {{ patient.nom_complet }}{% endblock %}
+{% block page_title %}Dossier Patient{% endblock %}
+{% block page_subtitle %}{{ patient.nom_complet }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-sm text-on-surface-variant">
+    <a href="{% url 'patients:liste' %}" class="hover:text-on-surface transition-colors">Patients</a>
+    <span class="material-symbols-outlined text-base">chevron_right</span>
+    <span class="text-on-surface">{{ patient.nom_complet }}</span>
+  </div>
+
+  <!-- Header -->
+  <div class="glass-panel rounded-2xl p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+      <div class="w-20 h-20 rounded-full bg-secondary/20 border border-secondary/30 flex items-center justify-center text-secondary font-headline font-bold text-2xl flex-shrink-0">
+        {{ patient.user.first_name|first }}{{ patient.user.last_name|first }}
+      </div>
+      <div class="flex-1">
+        <div class="flex flex-wrap items-center gap-3 mb-1">
+          <h2 class="font-headline font-bold text-2xl text-on-surface">{{ patient.nom_complet }}</h2>
+          <span class="chip-base {% if patient.user.statut == 'actif' %}chip-success{% else %}chip-error{% endif %}">
+            {{ patient.user.get_statut_display }}
+          </span>
+        </div>
+        <div class="flex flex-wrap gap-4 text-sm text-on-surface-variant mt-2">
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">mail</span>{{ patient.user.email }}
+          </span>
+          {% if patient.user.telephone %}
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">phone</span>{{ patient.user.telephone }}
+          </span>
+          {% endif %}
+          {% if patient.age %}
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">cake</span>{{ patient.age }} ans
+          </span>
+          {% endif %}
+          {% if patient.groupe_sanguin %}
+          <span class="chip-base chip-error">
+            <span class="material-symbols-outlined text-xs">bloodtype</span>
+            {{ patient.groupe_sanguin }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+      <a href="{% url 'rendez_vous:reserver' %}"
+        class="flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-headline font-semibold glow-button whitespace-nowrap self-start">
+        <span class="material-symbols-outlined text-base">add_circle</span>
+        Nouveau RDV
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+    <!-- Informations médicales -->
+    <div class="space-y-4">
+      <div class="bg-surface-container rounded-2xl p-5">
+        <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-xl">person</span>
+          Informations
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between text-sm">
+            <span class="text-on-surface-variant">Date de naissance</span>
+            <span class="text-on-surface font-medium">{{ patient.date_naissance|date:"d/m/Y"|default:"—" }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-on-surface-variant">Sexe</span>
+            <span class="text-on-surface font-medium">{{ patient.get_sexe_display|default:"—" }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-on-surface-variant">Groupe sanguin</span>
+            <span class="text-on-surface font-medium">{{ patient.groupe_sanguin|default:"—" }}</span>
+          </div>
+          <div class="pt-2 border-t border-outline-variant/10">
+            <span class="text-xs text-on-surface-variant">Adresse</span>
+            <p class="text-sm text-on-surface mt-1">{{ patient.adresse|default:"Non renseignée" }}</p>
+          </div>
+        </div>
+      </div>
+
+      {% if patient.allergies %}
+      <div class="bg-error/10 border border-error/20 rounded-2xl p-5">
+        <h3 class="font-headline font-semibold text-error mb-2 flex items-center gap-2">
+          <span class="material-symbols-outlined text-xl">warning</span>
+          Allergies
+        </h3>
+        <p class="text-sm text-on-surface">{{ patient.allergies }}</p>
+      </div>
+      {% endif %}
+
+      {% if patient.antecedents_resumes %}
+      <div class="bg-surface-container rounded-2xl p-5">
+        <h3 class="font-headline font-semibold text-on-surface mb-2 flex items-center gap-2">
+          <span class="material-symbols-outlined text-tertiary text-xl">history</span>
+          Antécédents
+        </h3>
+        <p class="text-sm text-on-surface-variant">{{ patient.antecedents_resumes }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Dossier médical & Consultations -->
+    <div class="xl:col-span-2 space-y-5">
+
+      <!-- Dossier médical -->
+      {% if patient.dossier_medical %}
+      <div class="bg-surface-container rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary text-xl">folder_shared</span>
+            Dossier Médical
+          </h3>
+          <a href="{% url 'consultations:dossier' patient.dossier_medical.pk %}"
+            class="text-xs text-primary hover:text-primary-container transition-colors font-medium">Ouvrir le dossier</a>
+        </div>
+        <div class="flex items-center gap-4 bg-surface-container-low rounded-xl p-4">
+          <div class="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-secondary">description</span>
+          </div>
+          <div>
+            <div class="text-sm font-medium text-on-surface">N° {{ patient.dossier_medical.numero_dossier }}</div>
+            <div class="text-xs text-on-surface-variant">Ouvert le {{ patient.dossier_medical.date_ouverture|date:"d/m/Y" }} — {{ patient.dossier_medical.nombre_consultations }} consultation{{ patient.dossier_medical.nombre_consultations|pluralize }}</div>
+          </div>
+          <span class="ml-auto chip-base chip-success">{{ patient.dossier_medical.get_statut_dossier_display }}</span>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Rendez-vous -->
+      <div class="bg-surface-container rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-xl">calendar_today</span>
+            Rendez-vous récents
+          </h3>
+          <a href="{% url 'rendez_vous:liste' %}" class="text-xs text-primary hover:text-primary-container transition-colors font-medium">Voir tout</a>
+        </div>
+        <div class="space-y-2">
+          {% for rdv in patient.rendez_vous.all|slice:":5" %}
+          <div class="flex items-center gap-3 bg-surface-container-low rounded-xl p-3">
+            <div class="w-9 h-9 rounded-full bg-primary-container/20 flex items-center justify-center text-primary font-semibold text-sm flex-shrink-0">
+              {{ rdv.medecin.user.first_name|first }}{{ rdv.medecin.user.last_name|first }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium text-on-surface">Dr. {{ rdv.medecin.nom_complet }}</div>
+              <div class="text-xs text-on-surface-variant">{{ rdv.date_rdv|date:"d/m/Y" }} à {{ rdv.heure_debut|time:"H:i" }}</div>
+            </div>
+            <span class="chip-base text-xs
+              {% if rdv.statut_rdv == 'confirme' %}chip-success
+              {% elif rdv.statut_rdv == 'en_attente' %}chip-warning
+              {% elif rdv.statut_rdv == 'termine' %}chip-info
+              {% else %}chip-error{% endif %}">
+              {{ rdv.get_statut_rdv_display }}
+            </span>
+          </div>
+          {% empty %}
+          <div class="text-center py-8 text-on-surface-variant/40 text-sm">Aucun rendez-vous</div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
