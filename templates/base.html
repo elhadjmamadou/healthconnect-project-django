@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HealthConnect{% endblock %}</title>
+    <link rel="stylesheet" href="{% load static %}{% static 'css/custom.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% include "components/navbar.html" %}
+
+    <div class="container-fluid">
+        <div class="row">
+            {% include "components/sidebar.html" %}
+            <main class="col">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    {% include "components/footer.html" %}
+
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
