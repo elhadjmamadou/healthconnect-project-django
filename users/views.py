@@ -1,12 +1,13 @@
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import CreateView
 
-from .forms import LoginForm, RegisterForm
+from .forms import LoginForm, ProfileForm, RegisterForm
 from .models import User
 
 
@@ -69,3 +70,38 @@ class DashboardRedirectView(View):
             return redirect('medecins:dashboard')
         else:
             return redirect('patients:dashboard')
+
+
+@method_decorator(login_required, name='dispatch')
+class ProfileView(View):
+    template_name = 'users/profile.html'
+
+    def get(self, request):
+        form = ProfileForm(instance=request.user)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profil mis à jour avec succès.')
+            return redirect('users:profile')
+        return render(request, self.template_name, {'form': form})
+
+
+@method_decorator(login_required, name='dispatch')
+class PasswordChangeView(View):
+    template_name = 'users/password_change.html'
+
+    def get(self, request):
+        form = PasswordChangeForm(request.user)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Mot de passe modifié avec succès.')
+            return redirect('users:profile')
+        return render(request, self.template_name, {'form': form})

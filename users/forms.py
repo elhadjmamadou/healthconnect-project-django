@@ -24,3 +24,14 @@ class RegisterForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'telephone', 'photo')
+        widgets = {
+            'first_name': forms.TextInput(attrs={'placeholder': 'Prénom'}),
+            'last_name': forms.TextInput(attrs={'placeholder': 'Nom'}),
+            'telephone': forms.TextInput(attrs={'placeholder': '+224 6XX XXX XXX'}),
+        }
