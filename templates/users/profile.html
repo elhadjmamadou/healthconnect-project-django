@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+  <!-- En-tête -->
+  <div class="glass-panel rounded-2xl p-6 flex items-center gap-5">
+    <div class="relative">
+      {% if request.user.photo %}
+        <img src="{{ request.user.photo.url }}" alt="Photo de profil"
+             class="w-20 h-20 rounded-full object-cover ring-2 ring-primary">
+      {% else %}
+        <div class="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center text-2xl font-bold text-on-primary">
+          {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+        </div>
+      {% endif %}
+    </div>
+    <div>
+      <h1 class="text-xl font-bold text-on-surface">{{ request.user.get_full_name }}</h1>
+      <p class="text-on-surface-variant text-sm">{{ request.user.email }}</p>
+      <span class="inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-medium
+        {% if request.user.is_medecin %}bg-secondary-container text-on-secondary
+        {% elif request.user.is_patient %}bg-primary-container text-on-primary
+        {% else %}bg-tertiary-container text-on-tertiary{% endif %}">
+        {{ request.user.get_role_display }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-{{ message.tags }} rounded-xl px-4 py-3 text-sm">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Formulaire profil -->
+  <div class="glass-panel rounded-2xl p-6 space-y-5">
+    <h2 class="text-lg font-semibold text-on-surface flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary">manage_accounts</span>
+      Informations personnelles
+    </h2>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-4">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert-error rounded-xl px-4 py-3 text-sm">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-on-surface-variant mb-1">Prénom</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<p class="text-error text-xs mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-sm text-on-surface-variant mb-1">Nom</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}<p class="text-error text-xs mt-1">{{ form.last_name.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm text-on-surface-variant mb-1">Téléphone</label>
+        {{ form.telephone }}
+        {% if form.telephone.errors %}<p class="text-error text-xs mt-1">{{ form.telephone.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div>
+        <label class="block text-sm text-on-surface-variant mb-1">Photo de profil</label>
+        {{ form.photo }}
+        {% if form.photo.errors %}<p class="text-error text-xs mt-1">{{ form.photo.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="glow-btn px-5 py-2 rounded-xl text-sm font-medium flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">save</span>
+          Sauvegarder
+        </button>
+        <a href="{% url 'users:password_change' %}"
+           class="px-5 py-2 rounded-xl text-sm font-medium border border-outline text-on-surface-variant hover:border-primary hover:text-primary transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">lock_reset</span>
+          Changer mon mot de passe
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Infos spécifiques au rôle -->
+  {% if request.user.is_patient %}
+    {% with p=request.user.patient_profile %}
+    {% if p %}
+    <div class="glass-panel rounded-2xl p-6 space-y-4">
+      <h2 class="text-lg font-semibold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">favorite</span>
+        Dossier patient
+      </h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+        <div>
+          <p class="text-on-surface-variant">Date de naissance</p>
+          <p class="text-on-surface font-medium">{{ p.date_naissance|default:"—" }}</p>
+        </div>
+        <div>
+          <p class="text-on-surface-variant">Âge</p>
+          <p class="text-on-surface font-medium">{% if p.age %}{{ p.age }} ans{% else %}—{% endif %}</p>
+        </div>
+        <div>
+          <p class="text-on-surface-variant">Sexe</p>
+          <p class="text-on-surface font-medium">{{ p.get_sexe_display|default:"—" }}</p>
+        </div>
+        <div>
+          <p class="text-on-surface-variant">Groupe sanguin</p>
+          <p class="text-on-surface font-medium">{{ p.groupe_sanguin|default:"—" }}</p>
+        </div>
+        <div class="col-span-2">
+          <p class="text-on-surface-variant">Allergies</p>
+          <p class="text-on-surface font-medium">{{ p.allergies|default:"Aucune connue" }}</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+  {% elif request.user.is_medecin %}
+    {% with m=request.user.medecin_profile %}
+    {% if m %}
+    <div class="glass-panel rounded-2xl p-6 space-y-4">
+      <h2 class="text-lg font-semibold text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">stethoscope</span>
+        Profil médecin
+      </h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+        <div>
+          <p class="text-on-surface-variant">N° d'ordre</p>
+          <p class="text-on-surface font-medium">{{ m.numero_ordre }}</p>
+        </div>
+        <div>
+          <p class="text-on-surface-variant">Mode d'exercice</p>
+          <p class="text-on-surface font-medium">{{ m.get_mode_exercice_display }}</p>
+        </div>
+        <div>
+          <p class="text-on-surface-variant">Tarif consultation</p>
+          <p class="text-on-surface font-medium">{{ m.tarif_consultation }} GNF</p>
+        </div>
+        <div class="col-span-3">
+          <p class="text-on-surface-variant">Spécialités</p>
+          <div class="flex flex-wrap gap-2 mt-1">
+            {% for s in m.specialites.all %}
+              <span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface text-xs">{{ s.libelle }}</span>
+            {% empty %}
+              <span class="text-on-surface-variant">Aucune spécialité renseignée</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+  {% endif %}
+
+</div>
+{% endblock %}
