@@ -1,0 +1,49 @@
+{% extends "rapports/pdf/rapport_base.html" %}
+
+{% block contenu %}
+  <div class="cartes">
+    <div class="carte">
+      <div class="chiffre">{{ stats.rdv_total }}</div>
+      <div class="libelle">Rendez-vous</div>
+    </div>
+    <div class="carte">
+      <div class="chiffre">{{ stats.ca_total|floatformat:0 }}</div>
+      <div class="libelle">GNF encaissés</div>
+    </div>
+    <div class="carte">
+      <div class="chiffre">{{ stats.nb_patients }}</div>
+      <div class="libelle">Patients</div>
+    </div>
+    <div class="carte">
+      <div class="chiffre">{{ stats.nb_medecins }}</div>
+      <div class="libelle">Médecins</div>
+    </div>
+  </div>
+
+  <h2>Rendez-vous sur la période</h2>
+  <table>
+    <tr><th>Indicateur</th><th style="text-align:right">Nombre</th></tr>
+    <tr><td>Total</td><td class="valeur">{{ stats.rdv_total }}</td></tr>
+    <tr><td>Confirmés</td><td class="valeur">{{ stats.rdv_confirmes }}</td></tr>
+    <tr><td>Terminés</td><td class="valeur">{{ stats.rdv_termines }}</td></tr>
+    <tr><td>En attente</td><td class="valeur">{{ stats.rdv_en_attente }}</td></tr>
+    <tr><td>Annulés</td><td class="valeur">{{ stats.rdv_annules }}</td></tr>
+    <tr><td>Non présentés (no-show)</td><td class="valeur">{{ stats.rdv_no_show }}</td></tr>
+  </table>
+
+  <h2>Activité financière</h2>
+  <table>
+    <tr><th>Indicateur</th><th style="text-align:right">Valeur</th></tr>
+    <tr><td>Montant total encaissé</td><td class="valeur">{{ stats.ca_total|floatformat:0 }} GNF</td></tr>
+    <tr><td>Paiements confirmés</td><td class="valeur">{{ stats.paiements_count }}</td></tr>
+  </table>
+
+  <h2>Patients &amp; médecins</h2>
+  <table>
+    <tr><th>Indicateur</th><th style="text-align:right">Nombre</th></tr>
+    <tr><td>Patients (total)</td><td class="valeur">{{ stats.nb_patients }}</td></tr>
+    <tr><td>Nouveaux patients</td><td class="valeur">{{ stats.nouveaux_patients }}</td></tr>
+    <tr><td>Médecins (total)</td><td class="valeur">{{ stats.nb_medecins }}</td></tr>
+    <tr><td>Nouveaux médecins</td><td class="valeur">{{ stats.nouveaux_medecins }}</td></tr>
+  </table>
+{% endblock %}

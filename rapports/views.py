@@ -1,139 +1,157 @@
-from datetime import timedelta
-
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Sum
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.files.base import ContentFile
+from django.db.models import Sum
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.utils import timezone
-from django.views.generic import TemplateView
+from django.views.generic import FormView, ListView, View
 
-from users.mixins import AdminRequiredMixin
+from weasyprint import HTML
 
+from medecins.models import Medecin
+from paiements.models import Paiement
+from patients.models import Patient
+from rendez_vous.models import RendezVous
 
-class DashboardAdminView(AdminRequiredMixin, TemplateView):
-    template_name = 'rapports/dashboard_admin.html'
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        from patients.models import Patient
-        from medecins.models import Medecin, Specialite
-        from rendez_vous.models import RendezVous
-        from paiements.models import Paiement
-        from notifications.models import Notification
-
-        today = timezone.localdate()
-        month_start = today.replace(day=1)
-
-        # Stats
-        ctx['stats'] = {
-            'total_patients': Patient.objects.count(),
-            'total_medecins': Medecin.objects.count(),
-            'rdv_today': RendezVous.objects.filter(date_rdv=today).count(),
-            'revenus_mois': Paiement.objects.filter(
-                statut_paiement='confirme',
-                date_paiement__date__gte=month_start,
-            ).aggregate(total=Sum('montant'))['total'] or 0,
-            'patients_new_month': Patient.objects.filter(date_creation__date__gte=month_start).count(),
-        }
-
-        # RDV récents
-        ctx['rdv_recents'] = RendezVous.objects.select_related(
-            'patient__user', 'medecin__user'
-        ).order_by('-date_rdv', '-heure_debut')[:6]
-
-        # Top médecins
-        medecins = Medecin.objects.annotate(
-            nb_rdv=Count('rendez_vous')
-        ).order_by('-nb_rdv')[:5]
-        max_rdv = medecins.first().nb_rdv if medecins else 1
-        for m in medecins:
-            m.pct = int((m.nb_rdv / max(max_rdv, 1)) * 100)
-        ctx['top_medecins'] = medecins
-
-        # Chart RDV 7 derniers jours
-        labels, values = [], []
-        for i in range(6, -1, -1):
-            d = today - timedelta(days=i)
-            count = RendezVous.objects.filter(date_rdv=d).count()
-            labels.append(d.strftime('%d/%m'))
-            values.append(count)
-        ctx['rdv_chart_data'] = {'labels': labels, 'values': values}
-
-        # Chart spécialités
-        specs = Specialite.objects.annotate(nb=Count('medecins')).order_by('-nb')[:5]
-        ctx['specialites_chart_data'] = {
-            'labels': [s.libelle for s in specs],
-            'values': [s.nb for s in specs],
-        }
-
-        # Notifications récentes
-        ctx['notifications_recentes'] = Notification.objects.select_related(
-            'utilisateur'
-        ).order_by('-date_envoi')[:5]
-
-        return ctx
+from .forms import RapportForm
+from .models import RapportGenere
 
 
-class AnalytiquesView(AdminRequiredMixin, TemplateView):
-    template_name = 'rapports/analytiques.html'
+def collecter_statistiques(debut, fin):
+    """Compte les données de la clinique sur la période choisie."""
+    rdv = RendezVous.objects.filter(date_rdv__range=(debut, fin))
+    paiements = Paiement.objects.filter(
+        statut_paiement=Paiement.StatutPaiement.CONFIRME,
+        date_paiement__date__range=(debut, fin),
+    )
+    return {
+        "rdv_total": rdv.count(),
+        "rdv_confirmes": rdv.filter(statut_rdv=RendezVous.StatutRdv.CONFIRME).count(),
+        "rdv_termines": rdv.filter(statut_rdv=RendezVous.StatutRdv.TERMINE).count(),
+        "rdv_en_attente": rdv.filter(statut_rdv=RendezVous.StatutRdv.EN_ATTENTE).count(),
+        "rdv_annules": rdv.filter(
+            statut_rdv__in=[
+                RendezVous.StatutRdv.ANNULE_PATIENT,
+                RendezVous.StatutRdv.ANNULE_MEDECIN,
+            ]
+        ).count(),
+        "rdv_no_show": rdv.filter(statut_rdv=RendezVous.StatutRdv.NO_SHOW).count(),
+        "ca_total": paiements.aggregate(total=Sum("montant"))["total"] or 0,
+        "paiements_count": paiements.count(),
+        "nb_medecins": Medecin.objects.count(),
+        "nb_patients": Patient.objects.count(),
+        "nouveaux_medecins": Medecin.objects.filter(
+            date_creation__date__range=(debut, fin)
+        ).count(),
+        "nouveaux_patients": Patient.objects.filter(
+            date_creation__date__range=(debut, fin)
+        ).count(),
+    }
+
+
+class ListeRapportsView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = RapportGenere
+    template_name = "rapports/liste_rapports.html"
+    context_object_name = "rapports"
+    paginate_by = 10
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        type_filtre = self.request.GET.get("type")
+        debut = self.request.GET.get("debut")
+        fin = self.request.GET.get("fin")
+        if type_filtre:
+            qs = qs.filter(type_rapport=type_filtre)
+        if debut:
+            qs = qs.filter(periode_debut__gte=debut)
+        if fin:
+            qs = qs.filter(periode_fin__lte=fin)
+        return qs
 
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        from rendez_vous.models import RendezVous
-        from paiements.models import Paiement
-        from patients.models import Patient
-        from medecins.models import Medecin
+        context = super().get_context_data(**kwargs)
+        context["types"] = RapportGenere.TypeRapport.choices
+        context["type_actif"] = self.request.GET.get("type", "")
+        context["debut_actif"] = self.request.GET.get("debut", "")
+        context["fin_actif"] = self.request.GET.get("fin", "")
+        return context
 
-        today = timezone.localdate()
-        periode = self.request.GET.get('periode', '30j')
-        jours = {'7j': 7, '30j': 30, '3m': 90, '6m': 180, '1an': 365}.get(periode, 30)
-        debut = today - timedelta(days=jours)
 
-        # RDV evolution
-        rdv_labels, rdv_values = [], []
-        step = max(1, jours // 14)
-        d = debut
-        while d <= today:
-            rdv_labels.append(d.strftime('%d/%m'))
-            rdv_values.append(RendezVous.objects.filter(date_rdv=d).count())
-            d += timedelta(days=step)
-        ctx['rdv_chart_data'] = {'labels': rdv_labels, 'values': rdv_values}
+class GenererRapportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
+    template_name = "rapports/generer_rapport.html"
+    form_class = RapportForm
 
-        # Revenus mensuels (12 derniers mois)
-        rev_labels, rev_values = [], []
-        for i in range(11, -1, -1):
-            m = (today.month - i - 1) % 12 + 1
-            y = today.year - ((today.month - i - 1) // 12)
-            total = Paiement.objects.filter(
-                statut_paiement='confirme',
-                date_paiement__year=y,
-                date_paiement__month=m,
-            ).aggregate(t=Sum('montant'))['t'] or 0
-            rev_labels.append(f'{m:02d}/{y}')
-            rev_values.append(float(total))
-        ctx['revenus_chart_data'] = {'labels': rev_labels, 'values': rev_values}
+    def test_func(self):
+        return self.request.user.is_staff
 
-        from medecins.models import Specialite
-        from django.db.models import Count
-        specs = Specialite.objects.annotate(nb=Count('medecins')).order_by('-nb')[:6]
-        ctx['specialites_chart_data'] = {
-            'labels': [s.libelle for s in specs],
-            'values': [s.nb for s in specs],
-        }
+    def form_valid(self, form):
+        type_rapport = form.cleaned_data["type_rapport"]
+        debut = form.cleaned_data["periode_debut"]
+        fin = form.cleaned_data["periode_fin"]
 
-        # Nouveaux patients
-        pt_labels, pt_values = [], []
-        for i in range(11, -1, -1):
-            m = (today.month - i - 1) % 12 + 1
-            y = today.year - ((today.month - i - 1) // 12)
-            count = Patient.objects.filter(date_creation__year=y, date_creation__month=m).count()
-            pt_labels.append(f'{m:02d}/{y}')
-            pt_values.append(count)
-        ctx['patients_chart_data'] = {'labels': pt_labels, 'values': pt_values}
+        libelle = dict(RapportGenere.TypeRapport.choices)[type_rapport]
+        titre = f"{libelle} — du {debut:%d/%m/%Y} au {fin:%d/%m/%Y}"
 
-        # Stats médecins
-        ctx['stats_medecins'] = Medecin.objects.annotate(
-            nb_rdv=Count('rendez_vous')
-        ).select_related('user').order_by('-nb_rdv')[:10]
+        stats = collecter_statistiques(debut, fin)
 
-        ctx['periode'] = periode
-        ctx['periodes'] = ['7j', '30j', '3m', '6m', '1an']
-        return ctx
+        html = render_to_string(
+            "rapports/pdf/rapport_activite.html",
+            {
+                "titre": titre,
+                "libelle": libelle,
+                "debut": debut,
+                "fin": fin,
+                "stats": stats,
+                "genere_par": self.request.user,
+                "date_generation": timezone.now(),
+            },
+        )
+        pdf = HTML(string=html).write_pdf()
+
+        rapport = RapportGenere(
+            titre=titre,
+            type_rapport=type_rapport,
+            periode_debut=debut,
+            periode_fin=fin,
+            genere_par=self.request.user,
+        )
+        nom_fichier = f"rapport_{type_rapport}_{debut:%Y%m%d}_{fin:%Y%m%d}.pdf"
+        rapport.fichier.save(nom_fichier, ContentFile(pdf), save=False)
+        rapport.save()
+
+        messages.success(self.request, "Rapport généré avec succès.")
+        return redirect("rapports:liste")
+
+
+class TelechargerRapportView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get(self, request, pk):
+        rapport = get_object_or_404(RapportGenere, pk=pk)
+        if not rapport.fichier:
+            raise Http404("Ce rapport n'a pas de fichier PDF.")
+        return FileResponse(
+            rapport.fichier.open("rb"),
+            content_type="application/pdf",
+            as_attachment=True,
+            filename=rapport.fichier.name.split("/")[-1],
+        )
+
+
+class SupprimerRapportView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def post(self, request, pk):
+        rapport = get_object_or_404(RapportGenere, pk=pk)
+        if rapport.fichier:
+            rapport.fichier.delete(save=False)  # supprime aussi le fichier du disque
+        rapport.delete()
+        messages.success(request, "Rapport supprimé.")
+        return redirect("rapports:liste")

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Rapports générés{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="font-headline text-2xl font-bold text-on-surface">Rapports générés</h1>
+      <p class="text-on-surface-variant text-sm mt-1">{{ paginator.count }} rapport{{ paginator.count|pluralize }} au total</p>
+    </div>
+    <a href="{% url 'rapports:generer' %}"
+       class="inline-flex items-center gap-2 bg-primary text-on-primary font-semibold px-4 py-2.5 rounded-xl hover:opacity-90 transition">
+      <span class="material-symbols-outlined text-base">add</span> Générer un rapport
+    </a>
+  </div>
+
+  <div class="flex flex-wrap gap-2 mb-5">
+    <a href="{% url 'rapports:liste' %}"
+       class="px-3 py-1.5 rounded-full text-sm {% if not type_actif %}bg-primary-container text-on-primary{% else %}bg-surface-container text-on-surface-variant{% endif %}">Tous</a>
+    {% for valeur, libelle in types %}
+      <a href="?type={{ valeur }}"
+         class="px-3 py-1.5 rounded-full text-sm {% if type_actif == valeur %}bg-primary-container text-on-primary{% else %}bg-surface-container text-on-surface-variant{% endif %}">{{ libelle }}</a>
+    {% endfor %}
+  </div>
+
+  <div class="bg-surface-container rounded-2xl border border-outline-variant/10 overflow-hidden">
+    {% if rapports %}
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-on-surface-variant text-left border-b border-outline-variant/10">
+          <th class="px-4 py-3 font-medium">Titre</th>
+          <th class="px-4 py-3 font-medium">Type</th>
+          <th class="px-4 py-3 font-medium">Période</th>
+          <th class="px-4 py-3 font-medium">Généré le</th>
+          <th class="px-4 py-3 font-medium text-right">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rapport in rapports %}
+        <tr class="border-b border-outline-variant/10 last:border-0">
+          <td class="px-4 py-3 text-on-surface font-medium">{{ rapport.titre }}</td>
+          <td class="px-4 py-3 text-on-surface-variant">{{ rapport.get_type_rapport_display }}</td>
+          <td class="px-4 py-3 text-on-surface-variant">{{ rapport.periode_debut|date:"d/m/Y" }} → {{ rapport.periode_fin|date:"d/m/Y" }}</td>
+          <td class="px-4 py-3 text-on-surface-variant">{{ rapport.date_generation|date:"d/m/Y H:i" }}</td>
+          <td class="px-4 py-3 text-right">
+            {% if rapport.fichier %}
+            <a href="{% url 'rapports:telecharger' rapport.pk %}" class="inline-flex items-center gap-1 text-primary hover:underline">
+              <span class="material-symbols-outlined text-base">download</span> PDF
+            </a>
+            {% else %}<span class="text-on-surface-variant/50">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-12 text-center text-on-surface-variant">
+      <span class="material-symbols-outlined text-4xl opacity-40">description</span>
+      <p class="mt-2">Aucun rapport pour l'instant.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if is_paginated %}
+  <div class="flex items-center justify-center gap-2 mt-6 text-sm">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if type_actif %}&type={{ type_actif }}{% endif %}" class="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface">Précédent</a>{% endif %}
+    <span class="text-on-surface-variant">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if type_actif %}&type={{ type_actif }}{% endif %}" class="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface">Suivant</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
