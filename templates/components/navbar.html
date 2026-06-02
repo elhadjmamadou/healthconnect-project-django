@@ -16,10 +16,12 @@
   <!-- Right actions -->
   <div class="flex items-center gap-3">
     <!-- Notifications -->
-    <button class="relative p-2 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
+    <a href="{% url 'notifications:liste' %}" class="relative p-2 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
       <span class="material-symbols-outlined">notifications</span>
-      <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-primary-container rounded-full"></span>
-    </button>
+      {% if nb_notifs_non_lues %}
+      <span class="absolute top-1 right-1 w-5 h-5 text-[11px] leading-5 text-white bg-error rounded-full flex items-center justify-center">{{ nb_notifs_non_lues }}</span>
+      {% endif %}
+    </a>
 
     <!-- User avatar -->
     {% if request.user.is_authenticated %}
