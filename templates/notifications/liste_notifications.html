@@ -14,60 +14,77 @@
       <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Notifications</h2>
       <p class="text-on-surface-variant text-sm mt-1">{{ page_obj.paginator.count }} notification{{ page_obj.paginator.count|pluralize }}</p>
     </div>
+    <div class="flex items-center gap-3">
+      <form method="post" action="{% url 'notifications:tout_lire' %}">
+        {% csrf_token %}
+        <button type="submit" class="rounded-xl px-4 py-2 bg-primary-container text-on-primary-container text-sm font-medium hover:bg-primary/90">
+          Tout marquer comme lu
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- Liste -->
   <div class="space-y-2">
     {% for notif in notifications %}
-    <div class="glass-panel rounded-2xl p-5 {% if not notif.est_lu %}border-l-2 border-primary-container{% endif %}">
-      <div class="flex items-start gap-4">
-        <!-- Icône type -->
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
-          {% if 'rdv' in notif.type_notification %}bg-primary-container/20
-          {% elif 'paiement' in notif.type_notification %}bg-secondary/20
-          {% else %}bg-surface-container-high{% endif %}">
-          <span class="material-symbols-outlined text-base
-            {% if 'rdv' in notif.type_notification %}text-primary-container
-            {% elif 'paiement' in notif.type_notification %}text-secondary
-            {% else %}text-on-surface-variant{% endif %}">
-            {% if 'rdv' in notif.type_notification %}event
-            {% elif 'paiement' in notif.type_notification %}payments
-            {% else %}notifications{% endif %}
+    <div class="glass-panel rounded-2xl p-5 transition-colors {% if not notif.est_lu %}border-l-4 border-primary-container bg-surface-container-high{% else %}bg-surface-container{% endif %}">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div class="flex items-start gap-4 flex-1">
+          <!-- Icône type -->
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+            {% if 'rdv' in notif.type_notification %}bg-primary-container/20
+            {% elif 'paiement' in notif.type_notification %}bg-secondary/20
+            {% else %}bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-base
+              {% if 'rdv' in notif.type_notification %}text-primary-container
+              {% elif 'paiement' in notif.type_notification %}text-secondary
+              {% else %}text-on-surface-variant{% endif %}">
+              {% if 'rdv' in notif.type_notification %}event
+              {% elif 'paiement' in notif.type_notification %}payments
+              {% else %}notifications{% endif %}
+            </span>
+          </div>
+
+          <!-- Contenu -->
+          <div class="flex-1 min-w-0">
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              <span class="text-sm font-medium text-on-surface">{{ notif.get_type_notification_display }}</span>
+              {% if not notif.est_lu %}
+              <span class="w-2 h-2 bg-primary-container rounded-full flex-shrink-0"></span>
+              {% endif %}
+              <span class="chip-base chip-info text-xs">{{ notif.get_canal_display }}</span>
+            </div>
+            <p class="text-sm text-on-surface-variant">{{ notif.contenu_resume }}</p>
+            <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-on-surface-variant/60">
+              <span class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">schedule</span>
+                {{ notif.date_envoi|date:"d/m/Y à H:i" }}
+              </span>
+              {% if notif.rendez_vous %}
+              <span class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">event</span>
+                RDV du {{ notif.rendez_vous.date_rdv|date:"d/m/Y" }}
+              </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-start gap-3 sm:items-end">
+          <span class="chip-base text-xs flex-shrink-0
+            {% if notif.statut_notification == 'lu' %}chip-info
+            {% elif notif.statut_notification == 'envoye' %}chip-success
+            {% elif notif.statut_notification == 'en_attente' %}chip-warning
+            {% else %}chip-error{% endif %}">
+            {{ notif.get_statut_notification_display }}
           </span>
+          {% if not notif.est_lu %}
+          <button type="button" data-notif-id="{{ notif.pk }}" class="mark-notif-read inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-surface-container text-on-surface hover:bg-surface-container-high text-xs font-medium">
+            <span class="material-symbols-outlined text-base">check</span>
+            Marquer comme lu
+          </button>
+          {% endif %}
         </div>
-
-        <!-- Contenu -->
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 mb-1 flex-wrap">
-            <span class="text-sm font-medium text-on-surface">{{ notif.get_type_notification_display }}</span>
-            {% if not notif.est_lu %}
-            <span class="w-2 h-2 bg-primary-container rounded-full flex-shrink-0"></span>
-            {% endif %}
-            <span class="chip-base chip-info text-xs">{{ notif.get_canal_display }}</span>
-          </div>
-          <p class="text-sm text-on-surface-variant">{{ notif.contenu_resume }}</p>
-          <div class="flex items-center gap-3 mt-2 text-xs text-on-surface-variant/60">
-            <span class="flex items-center gap-1">
-              <span class="material-symbols-outlined text-xs">schedule</span>
-              {{ notif.date_envoi|date:"d/m/Y à H:i" }}
-            </span>
-            {% if notif.rendez_vous %}
-            <span class="flex items-center gap-1">
-              <span class="material-symbols-outlined text-xs">event</span>
-              RDV du {{ notif.rendez_vous.date_rdv|date:"d/m/Y" }}
-            </span>
-            {% endif %}
-          </div>
-        </div>
-
-        <!-- Statut -->
-        <span class="chip-base text-xs flex-shrink-0
-          {% if notif.statut_notification == 'lu' %}chip-info
-          {% elif notif.statut_notification == 'envoye' %}chip-success
-          {% elif notif.statut_notification == 'en_attente' %}chip-warning
-          {% else %}chip-error{% endif %}">
-          {{ notif.get_statut_notification_display }}
-        </span>
       </div>
     </div>
     {% empty %}
@@ -100,4 +117,34 @@
   {% endif %}
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+
+  const csrfToken = getCookie('csrftoken');
+  const markUrlTemplate = "{% url 'notifications:marquer_lu' pk=0 %}";
+
+  document.querySelectorAll('.mark-notif-read').forEach(button => {
+    button.addEventListener('click', async () => {
+      const notificationId = button.dataset.notifId;
+      const url = markUrlTemplate.replace('/0/', `/${notificationId}/`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
+      if (response.ok) {
+        window.location.reload();
+      }
+    });
+  });
+</script>
 {% endblock %}
