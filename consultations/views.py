@@ -5,13 +5,24 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView, View
 
 from users.mixins import AdminRequiredMixin, MedecinRequiredMixin
 from rendez_vous.models import RendezVous
 
 from .forms import ConsultationForm
 from .models import Consultation, DossierMedical
+
+
+class MonDossierView(LoginRequiredMixin, View):
+    """Redirige le patient connecté vers son propre dossier médical."""
+
+    def get(self, request):
+        try:
+            dossier = request.user.patient_profile.dossier_medical
+        except Exception:
+            raise Http404("Dossier médical introuvable.")
+        return redirect('consultations:dossier', pk=dossier.pk)
 
 
 class DossierMedicalView(LoginRequiredMixin, DetailView):
