@@ -66,21 +66,33 @@
       </h3>
       <div class="space-y-3">
         {% for rdv in rdv_today %}
-        <div class="flex items-center gap-4 bg-surface-container-low rounded-xl p-4">
-          <div class="text-center flex-shrink-0 w-14">
-            <div class="font-headline font-bold text-primary text-lg leading-tight">{{ rdv.heure_debut|time:"H:i" }}</div>
-            <div class="text-xs text-on-surface-variant">{{ rdv.heure_fin|time:"H:i" }}</div>
+        <div class="flex items-center justify-between gap-4 bg-surface-container-low rounded-xl p-4">
+          <div class="flex items-center gap-4 flex-1 min-w-0">
+            <div class="text-center flex-shrink-0 w-14">
+              <div class="font-headline font-bold text-primary text-lg leading-tight">{{ rdv.heure_debut|time:"H:i" }}</div>
+              <div class="text-xs text-on-surface-variant">{{ rdv.heure_fin|time:"H:i" }}</div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium text-on-surface truncate">{{ rdv.patient.nom_complet }}</div>
+              <div class="text-xs text-on-surface-variant truncate">{{ rdv.motif|default:"Consultation générale" }}</div>
+            </div>
           </div>
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium text-on-surface truncate">{{ rdv.patient.nom_complet }}</div>
-            <div class="text-xs text-on-surface-variant truncate">{{ rdv.motif|default:"Consultation générale" }}</div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            {% if rdv.statut_rdv == 'confirme' or rdv.statut_rdv == 'en_attente' %}
+            <a href="{% url 'consultations:creer' rdv.pk %}"
+              class="inline-flex items-center gap-1 bg-tertiary/20 text-tertiary px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-tertiary/30 transition"
+              title="Créer une consultation">
+              <span class="material-symbols-outlined text-sm">add</span>
+              Consultation
+            </a>
+            {% endif %}
+            <span class="chip-base chip-base
+              {% if rdv.statut_rdv == 'confirme' %}chip-success
+              {% elif rdv.statut_rdv == 'en_attente' %}chip-warning
+              {% else %}chip-error{% endif %}">
+              {{ rdv.get_statut_rdv_display }}
+            </span>
           </div>
-          <span class="chip-base chip-base flex-shrink-0
-            {% if rdv.statut_rdv == 'confirme' %}chip-success
-            {% elif rdv.statut_rdv == 'en_attente' %}chip-warning
-            {% else %}chip-error{% endif %}">
-            {{ rdv.get_statut_rdv_display }}
-          </span>
         </div>
         {% empty %}
         <div class="text-center py-12 text-on-surface-variant/40">
@@ -99,14 +111,24 @@
       </h3>
       <div class="space-y-3">
         {% for rdv in prochains_rdv %}
-        <div class="flex items-center gap-3 py-2">
-          <div class="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-semibold text-sm flex-shrink-0">
-            {{ rdv.patient.user.first_name|first }}{{ rdv.patient.user.last_name|first }}
+        <div class="flex items-center justify-between gap-3 py-2 px-3">
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <div class="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-semibold text-sm flex-shrink-0">
+              {{ rdv.patient.user.first_name|first }}{{ rdv.patient.user.last_name|first }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium text-on-surface truncate">{{ rdv.patient.nom_complet }}</div>
+              <div class="text-xs text-on-surface-variant">{{ rdv.date_rdv|date:"d/m/Y" }} à {{ rdv.heure_debut|time:"H:i" }}</div>
+            </div>
           </div>
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium text-on-surface truncate">{{ rdv.patient.nom_complet }}</div>
-            <div class="text-xs text-on-surface-variant">{{ rdv.date_rdv|date:"d/m/Y" }} à {{ rdv.heure_debut|time:"H:i" }}</div>
-          </div>
+          {% if rdv.statut_rdv == 'confirme' or rdv.statut_rdv == 'en_attente' %}
+          <a href="{% url 'consultations:creer' rdv.pk %}"
+            class="inline-flex items-center gap-1 bg-tertiary/20 text-tertiary px-2.5 py-1 rounded-lg text-xs font-medium hover:bg-tertiary/30 transition flex-shrink-0"
+            title="Créer une consultation">
+            <span class="material-symbols-outlined text-sm">add</span>
+            Consultation
+          </a>
+          {% endif %}
         </div>
         {% empty %}
         <p class="text-on-surface-variant/40 text-sm text-center py-8">Aucun prochain rendez-vous</p>
@@ -140,7 +162,7 @@
             <td class="px-6 py-4 text-sm text-on-surface-variant">{{ c.date_consultation|date:"d/m/Y H:i" }}</td>
             <td class="px-6 py-4 text-sm text-on-surface-variant">{{ c.diagnostic|truncatechars:60|default:"—" }}</td>
             <td class="px-6 py-4 text-right">
-              <a href="#" class="text-tertiary text-xs font-medium hover:text-tertiary-container transition-colors">Voir dossier</a>
+              <a href="{% url 'consultations:detail' c.pk %}" class="text-tertiary text-xs font-medium hover:text-tertiary-container transition-colors">Voir consultation</a>
             </td>
           </tr>
           {% empty %}

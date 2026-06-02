@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier consultation{% endblock %}
+{% block page_title %}Modifier consultation{% endblock %}
+{% block page_subtitle %}Mettre à jour le compte-rendu de la consultation{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+
+  <!-- Patient info card -->
+  <div class="bg-surface-container rounded-2xl p-6 mb-6">
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+        <span class="material-symbols-outlined text-primary">person</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="font-headline font-semibold text-on-surface">{{ patient.nom_complet }}</h3>
+        <div class="text-sm text-on-surface-variant mt-1 space-y-1">
+          <p><span class="font-medium">Date de naissance :</span> {% if patient.date_naissance %}{{ patient.date_naissance|date:'d/m/Y' }} ({{ patient.age }} ans){% else %}-{% endif %}</p>
+          <p><span class="font-medium">Dossier médical :</span> {{ dossier.numero_dossier }}</p>
+          <p><span class="font-medium">Date consultation :</span> {{ consultation.date_consultation|date:'d/m/Y à H:i' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="rounded-xl px-4 py-3 text-sm bg-error-container text-error">
+          {{ form.non_field_errors.0 }}
+        </div>
+      {% endif %}
+
+      <!-- Compte rendu -->
+      <div>
+        <label class="block text-sm font-medium text-on-surface mb-2">
+          {{ form.compte_rendu.label }}
+        </label>
+        {{ form.compte_rendu }}
+        {% if form.compte_rendu.errors %}
+          <p class="text-error text-xs mt-1">{{ form.compte_rendu.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Diagnostic -->
+      <div>
+        <label class="block text-sm font-medium text-on-surface mb-2">
+          {{ form.diagnostic.label }}
+        </label>
+        {{ form.diagnostic }}
+        {% if form.diagnostic.errors %}
+          <p class="text-error text-xs mt-1">{{ form.diagnostic.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Prescription -->
+      <div>
+        <label class="block text-sm font-medium text-on-surface mb-2">
+          {{ form.prescription.label }}
+        </label>
+        {{ form.prescription }}
+        {% if form.prescription.errors %}
+          <p class="text-error text-xs mt-1">{{ form.prescription.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Observations -->
+      <div>
+        <label class="block text-sm font-medium text-on-surface mb-2">
+          {{ form.observations.label }}
+        </label>
+        {{ form.observations }}
+        {% if form.observations.errors %}
+          <p class="text-error text-xs mt-1">{{ form.observations.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex items-center gap-3 pt-4">
+        <button type="submit"
+          class="inline-flex items-center gap-2 bg-primary text-on-primary font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition">
+          <span class="material-symbols-outlined text-base">update</span>
+          Mettre à jour
+        </button>
+        <a href="{% url 'consultations:detail' consultation.pk %}"
+          class="text-on-surface-variant text-sm hover:text-on-surface transition">
+          Annuler
+        </a>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<style>
+  form textarea {
+    width: 100%;
+    background: #1b1b1f;
+    border: 1px solid #3c494c;
+    color: #e4e1e7;
+    border-radius: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+  }
+  form textarea:focus {
+    outline: none;
+    border-color: #22d3ee;
+    box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.25);
+  }
+</style>
+{% endblock %}

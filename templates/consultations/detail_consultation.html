@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Consultation{{ consultation.id }}{% endblock %}
+{% block page_title %}Consultation du {{ consultation.date_consultation|date:'d/m/Y' }}{% endblock %}
+{% block page_subtitle %}Détails de la consultation{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+
+  <!-- Header with patient info -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    
+    <!-- Patient card -->
+    <div class="lg:col-span-1">
+      <div class="bg-surface-container rounded-2xl p-6">
+        <h3 class="text-sm font-medium text-on-surface-variant mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">person</span>
+          PATIENT
+        </h3>
+        <div class="space-y-3">
+          <div>
+            <p class="text-xs text-on-surface-variant uppercase tracking-wide">Nom</p>
+            <p class="text-on-surface font-semibold">{{ patient.nom_complet }}</p>
+          </div>
+          {% if patient.date_naissance %}
+          <div>
+            <p class="text-xs text-on-surface-variant uppercase tracking-wide">Âge</p>
+            <p class="text-on-surface font-semibold">{{ patient.age }} ans</p>
+          </div>
+          {% endif %}
+          {% if patient.sexe %}
+          <div>
+            <p class="text-xs text-on-surface-variant uppercase tracking-wide">Sexe</p>
+            <p class="text-on-surface font-semibold">{{ patient.get_sexe_display }}</p>
+          </div>
+          {% endif %}
+          <div>
+            <p class="text-xs text-on-surface-variant uppercase tracking-wide">Dossier N°</p>
+            <p class="text-on-surface font-mono text-sm">{{ dossier.numero_dossier }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consultation info -->
+    <div class="lg:col-span-2">
+      <div class="bg-surface-container rounded-2xl p-6">
+        <h3 class="text-sm font-medium text-on-surface-variant mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">event</span>
+          CONSULTATION
+        </h3>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <p class="text-xs text-on-surface-variant uppercase tracking-wide">Date</p>
+            <p class="text-on-surface font-semibold">{{ consultation.date_consultation|date:'d/m/Y' }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-on-surface-variant uppercase tracking-wide">Heure</p>
+            <p class="text-on-surface font-semibold">{{ consultation.date_consultation|time:'H:i' }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-on-surface-variant uppercase tracking-wide">Médecin</p>
+            <p class="text-on-surface font-semibold">Dr. {{ consultation.medecin.nom_complet }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-on-surface-variant uppercase tracking-wide">Statut dossier</p>
+            <span class="chip-base chip-success text-xs">{{ dossier.get_statut_dossier_display }}</span>
+          </div>
+        </div>
+        {% if can_edit %}
+        <a href="{% url 'consultations:editer' consultation.pk %}"
+          class="inline-flex items-center gap-2 bg-primary text-on-primary text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition">
+          <span class="material-symbols-outlined text-base">edit</span>
+          Modifier
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Content sections -->
+  <div class="space-y-6">
+
+    <!-- Compte rendu -->
+    {% if consultation.compte_rendu %}
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">description</span>
+        Compte rendu
+      </h3>
+      <div class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">
+        {{ consultation.compte_rendu }}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Diagnostic -->
+    {% if consultation.diagnostic %}
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">diagnosis</span>
+        Diagnostic
+      </h3>
+      <div class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">
+        {{ consultation.diagnostic }}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Prescription -->
+    {% if consultation.prescription %}
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-tertiary">medication</span>
+        Prescription
+      </h3>
+      <div class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">
+        {{ consultation.prescription }}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Observations -->
+    {% if consultation.observations %}
+    <div class="bg-surface-container rounded-2xl p-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary-container">note</span>
+        Observations
+      </h3>
+      <div class="text-on-surface-variant leading-relaxed whitespace-pre-wrap">
+        {{ consultation.observations }}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Footer -->
+  <div class="mt-8 pt-6 border-t border-outline-variant/10">
+    <div class="flex justify-between items-center text-xs text-on-surface-variant">
+      <span>Créé le {{ consultation.date_creation|date:'d/m/Y à H:i' }}</span>
+      <span>Modifié le {{ consultation.date_modification|date:'d/m/Y à H:i' }}</span>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  .chip-base {
+    @apply inline-flex items-center px-3 py-1 rounded-full font-medium text-xs;
+  }
+  .chip-success {
+    @apply bg-tertiary/20 text-tertiary;
+  }
+</style>
+{% endblock %}
