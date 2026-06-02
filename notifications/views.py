@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView
+
 from .models import Notification
 
 
@@ -18,26 +19,40 @@ class ListeNotificationsView(LoginRequiredMixin, ListView):
             utilisateur=self.request.user
         ).order_by('-date_envoi')
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['nb_non_lues'] = Notification.objects.filter(
+            utilisateur=self.request.user,
+            statut_notification__in=[
+                Notification.StatutNotification.EN_ATTENTE,
+                Notification.StatutNotification.ENVOYE,
+            ],
+        ).count()
+        return ctx
+
 
 class MarquerLuView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        notification = get_object_or_404(
+        notif = get_object_or_404(
             Notification,
             pk=pk,
             utilisateur=request.user,
         )
-        notification.statut_notification = Notification.StatutNotification.LU
-        notification.date_lecture = timezone.now()
-        notification.save(update_fields=['statut_notification', 'date_lecture'])
-        return JsonResponse({'status': 'ok'})
+        if not notif.est_lu:
+            notif.statut_notification = Notification.StatutNotification.LU
+            notif.date_lecture = timezone.now()
+            notif.save(update_fields=['statut_notification', 'date_lecture'])
+        return JsonResponse({'status': 'ok', 'pk': pk})
 
 
 class MarquerToutLuView(LoginRequiredMixin, View):
     def post(self, request):
         Notification.objects.filter(
-            utilisateur=request.user
-        ).exclude(
-            statut_notification=Notification.StatutNotification.LU
+            utilisateur=request.user,
+            statut_notification__in=[
+                Notification.StatutNotification.EN_ATTENTE,
+                Notification.StatutNotification.ENVOYE,
+            ],
         ).update(
             statut_notification=Notification.StatutNotification.LU,
             date_lecture=timezone.now(),

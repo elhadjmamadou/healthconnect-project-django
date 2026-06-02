@@ -28,7 +28,7 @@ def _creer_notification(utilisateur, type_notification, contenu_resume, rendez_v
     try:
         envoyer_email_notification(notification)
     except Exception as exc:
-        logger.warning('Échec de l’envoi d’email pour la notification %s : %s', notification.pk, exc)
+        logger.warning('Échec de l\'envoi d\'email pour la notification %s : %s', notification.pk, exc)
 
     return notification
 

@@ -2,111 +2,118 @@
 {% load static %}
 
 {% block title %}Centre de Commande{% endblock %}
-
 {% block page_title %}Centre de Commande{% endblock %}
-{% block page_subtitle %}Tableau de bord — Administration{% endblock %}
+{% block page_subtitle %}Administration — Tableau de bord{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
 
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in-up">
     <div>
       <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Centre de Commande</h2>
-      <p class="text-on-surface-variant text-sm mt-1">Tableau de bord — Administration</p>
+      <p class="text-on-surface-variant text-sm mt-1 opacity-70">Vue d'ensemble de la plateforme HealthConnect</p>
     </div>
-    <div class="chip-base chip-success flex items-center gap-2">
-      <span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
-      Système Opérationnel
+    <div class="flex items-center gap-2 bg-secondary/8 border border-secondary/20 rounded-full px-4 py-2">
+      <span class="status-dot status-dot-live"></span>
+      <span class="text-secondary text-xs font-semibold tracking-wide">Système opérationnel</span>
     </div>
   </div>
 
   <!-- KPI Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-    <div class="bg-surface-container rounded-2xl p-6 glow-cyan">
-      <div class="flex items-start justify-between mb-4">
-        <div class="w-11 h-11 rounded-xl bg-primary-container/20 flex items-center justify-center">
-          <span class="material-symbols-outlined text-primary">group</span>
+  <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 stagger">
+
+    <div class="kpi-card kpi-card-primary glass-card-cyan rounded-2xl p-5">
+      <div class="flex items-start justify-between mb-5">
+        <div class="w-10 h-10 rounded-xl bg-primary-container/15 flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary text-xl icon-filled">group</span>
         </div>
-        <span class="chip-base chip-success text-xs">+{{ stats.patients_new_month|default:'0' }} ce mois</span>
+        <span class="chip-base chip-success text-[10px]">+{{ stats.patients_new_month|default:'0' }} mois</span>
       </div>
-      <div class="font-headline font-bold text-3xl text-primary">{{ stats.total_patients|default:'0' }}</div>
-      <div class="text-on-surface-variant text-sm mt-1">Total Patients</div>
+      <div class="kpi-number text-3xl kpi-number-gradient kpi-count" data-count="{{ stats.total_patients|default:0 }}">{{ stats.total_patients|default:'0' }}</div>
+      <div class="text-on-surface-variant text-xs mt-1.5 font-medium">Total Patients</div>
     </div>
 
-    <div class="bg-surface-container rounded-2xl p-6 glow-cyan">
-      <div class="flex items-start justify-between mb-4">
-        <div class="w-11 h-11 rounded-xl bg-secondary/20 flex items-center justify-center">
-          <span class="material-symbols-outlined text-secondary">medical_services</span>
+    <div class="kpi-card kpi-card-secondary glass-card-green rounded-2xl p-5">
+      <div class="flex items-start justify-between mb-5">
+        <div class="w-10 h-10 rounded-xl bg-secondary/15 flex items-center justify-center">
+          <span class="material-symbols-outlined text-secondary text-xl icon-filled">medical_services</span>
         </div>
-        <span class="chip-base chip-success text-xs">Actifs</span>
+        <span class="chip-base chip-info text-[10px]">Actifs</span>
       </div>
-      <div class="font-headline font-bold text-3xl text-secondary">{{ stats.total_medecins|default:'0' }}</div>
-      <div class="text-on-surface-variant text-sm mt-1">Total Médecins</div>
+      <div class="kpi-number text-3xl kpi-number-green kpi-count" data-count="{{ stats.total_medecins|default:0 }}">{{ stats.total_medecins|default:'0' }}</div>
+      <div class="text-on-surface-variant text-xs mt-1.5 font-medium">Total Médecins</div>
     </div>
 
-    <div class="bg-surface-container rounded-2xl p-6 glow-cyan">
-      <div class="flex items-start justify-between mb-4">
-        <div class="w-11 h-11 rounded-xl bg-tertiary/20 flex items-center justify-center">
-          <span class="material-symbols-outlined text-tertiary">calendar_today</span>
+    <div class="kpi-card kpi-card-tertiary glass-card-purple rounded-2xl p-5">
+      <div class="flex items-start justify-between mb-5">
+        <div class="w-10 h-10 rounded-xl bg-tertiary/15 flex items-center justify-center">
+          <span class="material-symbols-outlined text-tertiary text-xl icon-filled">calendar_today</span>
         </div>
-        <span class="chip-base chip-tertiary text-xs">Aujourd'hui</span>
+        <span class="chip-base chip-tertiary text-[10px]">Aujourd'hui</span>
       </div>
-      <div class="font-headline font-bold text-3xl text-tertiary">{{ stats.rdv_today|default:'0' }}</div>
-      <div class="text-on-surface-variant text-sm mt-1">Rendez-vous</div>
+      <div class="kpi-number text-3xl kpi-number-purple kpi-count" data-count="{{ stats.rdv_today|default:0 }}">{{ stats.rdv_today|default:'0' }}</div>
+      <div class="text-on-surface-variant text-xs mt-1.5 font-medium">Rendez-vous</div>
     </div>
 
-    <div class="bg-surface-container rounded-2xl p-6 glow-cyan">
-      <div class="flex items-start justify-between mb-4">
-        <div class="w-11 h-11 rounded-xl bg-primary-container/20 flex items-center justify-center">
-          <span class="material-symbols-outlined text-primary-container">payments</span>
+    <div class="kpi-card kpi-card-primary glass-card-cyan rounded-2xl p-5">
+      <div class="flex items-start justify-between mb-5">
+        <div class="w-10 h-10 rounded-xl bg-primary-container/15 flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary-container text-xl icon-filled">payments</span>
         </div>
-        <span class="chip-base chip-warning text-xs">Ce mois</span>
+        <span class="chip-base chip-warning text-[10px]">Ce mois</span>
       </div>
-      <div class="font-headline font-bold text-2xl text-primary-container">{{ stats.revenus_mois|default:'0' }} <span class="text-base font-normal">GNF</span></div>
-      <div class="text-on-surface-variant text-sm mt-1">Revenus du mois</div>
+      <div class="kpi-number text-2xl text-gradient-cyan">{{ stats.revenus_mois|default:'0' }}</div>
+      <div class="text-on-surface-variant text-xs mt-1.5 font-medium">Revenus GNF</div>
     </div>
   </div>
 
-  <!-- Main grid -->
+  <!-- Charts row -->
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
     <!-- Chart RDV -->
-    <div class="bg-surface-container rounded-2xl p-6">
-      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-primary text-xl">monitoring</span>
-        Activité des Rendez-vous
-      </h3>
-      <div class="relative h-56">
+    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-xl icon-filled">monitoring</span>
+          Activité Rendez-vous
+        </h3>
+        <span class="text-xs text-on-surface-variant/50">30 derniers jours</span>
+      </div>
+      <div class="relative h-52">
         <canvas id="rdvChart"></canvas>
       </div>
     </div>
 
     <!-- RDV récents -->
-    <div class="bg-surface-container rounded-2xl p-6">
-      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-secondary text-xl">event</span>
-        Rendez-vous Récents
-      </h3>
-      <div class="space-y-3">
+    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary text-xl icon-filled">event</span>
+          Rendez-vous Récents
+        </h3>
+        <a href="{% url 'rendez_vous:liste' %}" class="text-xs text-primary hover:text-primary-container transition-colors font-medium hover-link">Voir tout</a>
+      </div>
+      <div class="space-y-2">
         {% for rdv in rdv_recents %}
-        <div class="flex items-center gap-3 py-2">
-          <div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary font-semibold text-sm flex-shrink-0">
+        <div class="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-surface-container-high transition-colors cursor-default">
+          <div class="w-9 h-9 rounded-full bg-primary-container/15 flex items-center justify-center text-primary font-semibold text-xs flex-shrink-0">
             {{ rdv.patient.user.first_name|first }}{{ rdv.patient.user.last_name|first }}
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-on-surface truncate">{{ rdv.patient.nom_complet }}</div>
-            <div class="text-xs text-on-surface-variant truncate">Dr. {{ rdv.medecin.nom_complet }} — {{ rdv.heure_debut|time:"H:i" }}</div>
+            <div class="text-xs text-on-surface-variant/60 truncate">Dr. {{ rdv.medecin.nom_complet }} — {{ rdv.heure_debut|time:"H:i" }}</div>
           </div>
           <span class="chip-base flex-shrink-0
             {% if rdv.statut_rdv == 'confirme' %}chip-success
             {% elif rdv.statut_rdv == 'en_attente' %}chip-warning
+            {% elif rdv.statut_rdv == 'termine' %}chip-info
             {% else %}chip-error{% endif %}">
             {{ rdv.get_statut_rdv_display }}
           </span>
         </div>
         {% empty %}
-        <div class="text-center py-8 text-on-surface-variant/40">
+        <div class="text-center py-10 text-on-surface-variant/30">
           <span class="material-symbols-outlined text-4xl block mb-2">event_busy</span>
           <p class="text-sm">Aucun rendez-vous récent</p>
         </div>
@@ -119,61 +126,64 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
     <!-- Top médecins -->
-    <div class="bg-surface-container rounded-2xl p-6">
-      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-primary text-xl">workspace_premium</span>
+    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-xl icon-filled">workspace_premium</span>
         Médecins Actifs
       </h3>
       <div class="space-y-4">
         {% for medecin in top_medecins %}
         <div>
-          <div class="flex items-center justify-between mb-1">
-            <div>
-              <div class="text-sm font-medium text-on-surface">Dr. {{ medecin.nom_complet }}</div>
-              <div class="text-xs text-on-surface-variant">{{ medecin.specialites_list|join:", "|default:"—" }}</div>
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium text-on-surface truncate">Dr. {{ medecin.nom_complet }}</div>
+              <div class="text-xs text-on-surface-variant/60">{{ medecin.specialites_list|join:", "|default:"—" }}</div>
             </div>
-            <span class="text-xs text-secondary font-semibold">{{ medecin.nb_rdv|default:0 }} RDV</span>
+            <span class="text-xs text-secondary font-semibold ml-3 flex-shrink-0">{{ medecin.nb_rdv|default:0 }} RDV</span>
           </div>
           <div class="progress-bar">
             <div class="progress-fill" style="width: {{ medecin.pct|default:0 }}%"></div>
           </div>
         </div>
         {% empty %}
-        <p class="text-on-surface-variant/40 text-sm text-center py-4">Aucun médecin</p>
+        <p class="text-on-surface-variant/30 text-sm text-center py-6">Aucun médecin</p>
         {% endfor %}
       </div>
     </div>
 
     <!-- Doughnut spécialités -->
-    <div class="bg-surface-container rounded-2xl p-6">
-      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-tertiary text-xl">pie_chart</span>
+    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined text-tertiary text-xl icon-filled">pie_chart</span>
         Répartition Spécialités
       </h3>
-      <div class="relative h-48">
+      <div class="relative h-44">
         <canvas id="specialitesChart"></canvas>
       </div>
     </div>
 
     <!-- Notifications système -->
-    <div class="bg-surface-container rounded-2xl p-6">
-      <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-error text-xl">notifications</span>
-        Notifications Système
+    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined text-error text-xl icon-filled">notifications_active</span>
+        Activité Récente
       </h3>
       <div class="space-y-3">
         {% for notif in notifications_recentes %}
         <div class="flex items-start gap-3">
-          <div class="w-8 h-8 rounded-xl bg-surface-container-highest flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span class="material-symbols-outlined text-sm text-primary">notifications</span>
+          <div class="w-7 h-7 rounded-xl bg-surface-container-highest flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="material-symbols-outlined text-xs text-primary">notifications</span>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-xs text-on-surface leading-tight">{{ notif.contenu_resume|truncatechars:60 }}</div>
-            <div class="text-[10px] text-on-surface-variant mt-1">{{ notif.date_envoi|timesince }} ago</div>
+            <div class="text-xs text-on-surface leading-snug">{{ notif.contenu_resume|truncatechars:55 }}</div>
+            <div class="text-[10px] text-on-surface-variant/50 mt-1">{{ notif.date_envoi|timesince }}</div>
           </div>
         </div>
         {% empty %}
-        <p class="text-on-surface-variant/40 text-sm text-center py-4">Aucune notification</p>
+        <div class="text-center py-6 text-on-surface-variant/30">
+          <span class="material-symbols-outlined text-3xl block mb-1">notifications_off</span>
+          <p class="text-xs">Aucune activité</p>
+        </div>
         {% endfor %}
       </div>
     </div>
@@ -188,12 +198,11 @@
 const rdvData = JSON.parse(document.getElementById('rdv-data').textContent);
 const specialitesData = JSON.parse(document.getElementById('specialites-data').textContent);
 
-Chart.defaults.color = '#bbc9cd';
-Chart.defaults.borderColor = 'rgba(60,73,76,0.2)';
+Chart.defaults.color = 'rgba(187,201,205,0.6)';
+Chart.defaults.borderColor = 'rgba(60,73,76,0.15)';
 
 // Graphique RDV
-const rdvCtx = document.getElementById('rdvChart').getContext('2d');
-new Chart(rdvCtx, {
+new Chart(document.getElementById('rdvChart').getContext('2d'), {
   type: 'line',
   data: {
     labels: rdvData.labels,
@@ -202,49 +211,62 @@ new Chart(rdvCtx, {
       data: rdvData.values,
       borderColor: '#22d3ee',
       backgroundColor: (ctx) => {
-        const grad = ctx.chart.ctx.createLinearGradient(0, 0, 0, 200);
-        grad.addColorStop(0, 'rgba(34,211,238,0.2)');
-        grad.addColorStop(1, 'rgba(34,211,238,0)');
-        return grad;
+        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220);
+        g.addColorStop(0, 'rgba(34,211,238,0.18)');
+        g.addColorStop(1, 'rgba(34,211,238,0)');
+        return g;
       },
-      fill: true,
-      tension: 0.4,
-      borderWidth: 2,
+      fill: true, tension: 0.45, borderWidth: 2.5,
       pointBackgroundColor: '#22d3ee',
+      pointBorderColor: '#0e0e12',
+      pointBorderWidth: 2,
       pointRadius: 4,
+      pointHoverRadius: 6,
     }]
   },
   options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: {
+      backgroundColor: 'rgba(30,30,35,0.9)',
+      borderColor: 'rgba(34,211,238,0.2)',
+      borderWidth: 1,
+      titleColor: '#8aebff',
+      bodyColor: '#e4e1e7',
+      padding: 10,
+      cornerRadius: 10,
+    }},
     scales: {
-      x: { grid: { color: 'rgba(60,73,76,0.2)' } },
-      y: { grid: { color: 'rgba(60,73,76,0.2)' }, beginAtZero: true }
+      x: { grid: { color: 'rgba(60,73,76,0.12)' }, ticks: { font: { size: 10 } } },
+      y: { grid: { color: 'rgba(60,73,76,0.12)' }, beginAtZero: true, ticks: { font: { size: 10 } } }
     }
   }
 });
 
-// Graphique spécialités
-const specCtx = document.getElementById('specialitesChart').getContext('2d');
-new Chart(specCtx, {
+// Doughnut spécialités
+new Chart(document.getElementById('specialitesChart').getContext('2d'), {
   type: 'doughnut',
   data: {
     labels: specialitesData.labels,
     datasets: [{
       data: specialitesData.values,
-      backgroundColor: ['#22d3ee','#4edea3','#e4d6ff','#ffb4ab','#8aebff'],
-      borderColor: '#1f1f23',
+      backgroundColor: ['#22d3ee','#4edea3','#cbb5ff','#ffb4ab','#8aebff','#fbbf24'],
+      borderColor: '#1a1a1e',
       borderWidth: 3,
+      hoverOffset: 6,
     }]
   },
   options: {
-    responsive: true,
-    maintainAspectRatio: false,
+    responsive: true, maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8 } }
+      legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 10 } } },
+      tooltip: {
+        backgroundColor: 'rgba(30,30,35,0.9)',
+        borderColor: 'rgba(34,211,238,0.2)',
+        borderWidth: 1,
+        cornerRadius: 10,
+      }
     },
-    cutout: '65%',
+    cutout: '68%',
   }
 });
 </script>

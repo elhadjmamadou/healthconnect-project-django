@@ -5,7 +5,6 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.generic import CreateView
 
 from .forms import LoginForm, ProfileForm, RegisterForm
 from .models import User

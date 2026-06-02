@@ -15,20 +15,20 @@
       extend: {
         colors: {
           "surface": "#131317",
-          "background": "#131317",
-          "surface-container": "#1f1f23",
-          "surface-container-low": "#1b1b1f",
-          "surface-container-high": "#2a292e",
-          "surface-container-highest": "#353439",
+          "background": "#0e0e12",
+          "surface-container": "#1a1a1e",
+          "surface-container-low": "#161619",
+          "surface-container-high": "#242428",
+          "surface-container-highest": "#2e2d32",
           "surface-container-lowest": "#0e0e12",
-          "surface-bright": "#39393d",
-          "surface-variant": "#353439",
-          "surface-dim": "#131317",
+          "surface-bright": "#36353a",
+          "surface-variant": "#2e2d32",
+          "surface-dim": "#0e0e12",
           "surface-tint": "#2fd9f4",
           "primary": "#8aebff",
           "primary-container": "#22d3ee",
           "on-primary": "#00363e",
-          "on-primary-container": "#005763",
+          "on-primary-container": "#003d47",
           "secondary": "#4edea3",
           "secondary-container": "#00a572",
           "on-secondary": "#003824",
@@ -38,7 +38,7 @@
           "error": "#ffb4ab",
           "error-container": "#93000a",
           "on-error": "#690005",
-          "on-surface": "#e4e1e7",
+          "on-surface": "#e6e3e9",
           "on-surface-variant": "#bbc9cd",
           "outline": "#859397",
           "outline-variant": "#3c494c",
@@ -49,6 +49,9 @@
           "headline": ["Manrope", "sans-serif"],
           "body": ["Inter", "sans-serif"],
         },
+        animation: {
+          "fade-in-up": "fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both",
+        }
       }
     }
   }
@@ -70,26 +73,28 @@
 
   {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-surface text-on-surface min-h-screen">
+<body class="bg-background text-on-surface min-h-screen">
 
   <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <aside class="hidden lg:flex flex-col w-64 min-h-screen bg-surface border-r border-outline-variant/10 fixed left-0 top-0 z-30">
+
+    <!-- Sidebar desktop -->
+    <aside class="hidden lg:flex flex-col w-64 min-h-screen bg-surface border-r border-white/[0.04] fixed left-0 top-0 z-30">
       {% block sidebar %}
         {% include 'components/sidebar.html' %}
       {% endblock %}
     </aside>
 
     <!-- Mobile sidebar overlay -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-20 hidden lg:hidden" onclick="toggleSidebar()"></div>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 z-20 hidden lg:hidden backdrop-blur-sm" onclick="toggleSidebar()"></div>
 
     <!-- Mobile sidebar -->
-    <aside id="mobile-sidebar" class="fixed left-0 top-0 bottom-0 w-64 bg-surface border-r border-outline-variant/10 z-40 transform -translate-x-full transition-transform duration-300 lg:hidden flex flex-col">
+    <aside id="mobile-sidebar" class="fixed left-0 top-0 bottom-0 w-64 bg-surface border-r border-white/[0.04] z-40 transform -translate-x-full transition-transform duration-300 ease-in-out lg:hidden flex flex-col">
       {% include 'components/sidebar.html' %}
     </aside>
 
     <!-- Main content -->
     <div class="flex-1 lg:ml-64 flex flex-col min-h-screen">
+
       <!-- Navbar -->
       {% block navbar %}
         {% include 'components/navbar.html' %}
@@ -97,15 +102,18 @@
 
       <!-- Flash messages -->
       {% if messages %}
-      <div class="px-6 pt-4 space-y-2">
+      <div id="toast-container" class="px-6 pt-4 space-y-2">
         {% for message in messages %}
-        <div class="alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %} rounded-xl px-4 py-3 flex items-center gap-3">
-          <span class="material-symbols-outlined text-sm">
-            {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}check_circle{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}
-          </span>
-          <span class="text-sm font-medium">{{ message }}</span>
-          <button class="ml-auto" onclick="this.parentElement.remove()">
-            <span class="material-symbols-outlined text-base opacity-60">close</span>
+        <div class="toast-message alert-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %} rounded-2xl px-4 py-3 flex items-center gap-3 shadow-lg">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0
+            {% if message.tags == 'error' %}bg-error/20{% elif message.tags == 'success' %}bg-secondary/20{% elif message.tags == 'warning' %}bg-yellow-400/20{% else %}bg-tertiary/20{% endif %}">
+            <span class="material-symbols-outlined text-base icon-filled">
+              {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}check_circle{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}
+            </span>
+          </div>
+          <span class="text-sm font-medium flex-1">{{ message }}</span>
+          <button onclick="dismissToast(this)" class="p-1 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0">
+            <span class="material-symbols-outlined text-base opacity-50">close</span>
           </button>
         </div>
         {% endfor %}
@@ -124,14 +132,76 @@
     </div>
   </div>
 
-  <!-- Mobile menu toggle script -->
   <script>
+  /* ── Sidebar mobile ── */
   function toggleSidebar() {
     const sidebar = document.getElementById('mobile-sidebar');
     const overlay = document.getElementById('sidebar-overlay');
     sidebar.classList.toggle('-translate-x-full');
     overlay.classList.toggle('hidden');
   }
+
+  /* ── Toast auto-dismiss ── */
+  function dismissToast(btn) {
+    const toast = btn.closest('.toast-message');
+    toast.classList.add('dismissing');
+    toast.addEventListener('animationend', () => toast.remove(), { once: true });
+  }
+  document.querySelectorAll('.toast-message').forEach(toast => {
+    setTimeout(() => {
+      if (toast.isConnected) dismissToast(toast.querySelector('button'));
+    }, 5000);
+  });
+
+  /* ── Animations entrée page ── */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animation = 'fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both';
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.observe-animate').forEach(el => observer.observe(el));
+
+  /* ── Counter animé pour KPI ── */
+  function animateCount(el) {
+    const target = parseFloat(el.dataset.count || el.textContent.replace(/[^0-9.]/g, ''));
+    const duration = 900;
+    const start = performance.now();
+    const suffix = el.dataset.suffix || '';
+    const isFloat = target % 1 !== 0;
+    const step = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const value = isFloat ? (target * ease).toFixed(0) : Math.floor(target * ease);
+      el.textContent = value.toLocaleString('fr-FR') + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  const countObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCount(entry.target);
+        countObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.kpi-count').forEach(el => countObserver.observe(el));
+
+  /* ── Submit button loading ── */
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn && !btn.classList.contains('no-loading')) {
+        setTimeout(() => btn.classList.add('btn-loading'), 50);
+      }
+    });
+  });
   </script>
 
   {% block scripts %}{% endblock %}

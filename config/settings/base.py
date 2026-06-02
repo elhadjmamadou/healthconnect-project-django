@@ -57,7 +57,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'notifications.context_processors.nb_notifs_non_lues',
+                'notifications.context_processors.notifications_non_lues',
             ],
         },
     },

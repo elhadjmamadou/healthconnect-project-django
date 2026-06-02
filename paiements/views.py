@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import models
 from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
@@ -20,12 +21,20 @@ class ListePaiementsView(LoginRequiredMixin, ListView):
         qs = Paiement.objects.select_related(
             'rendez_vous__patient__user',
             'rendez_vous__medecin__user',
+            'consultation__dossier__patient__user',
+            'consultation__medecin__user',
         )
         user = self.request.user
         if user.is_patient:
-            qs = qs.filter(rendez_vous__patient__user=user)
+            qs = qs.filter(
+                models.Q(rendez_vous__patient__user=user)
+                | models.Q(consultation__dossier__patient__user=user)
+            )
         elif user.is_medecin:
-            qs = qs.filter(rendez_vous__medecin__user=user)
+            qs = qs.filter(
+                models.Q(rendez_vous__medecin__user=user)
+                | models.Q(consultation__medecin__user=user)
+            )
 
         statut = self.request.GET.get('statut', '')
         mode = self.request.GET.get('mode', '')
@@ -56,6 +65,26 @@ class DetailPaiementView(LoginRequiredMixin, DetailView):
     model = Paiement
     template_name = 'paiements/detail_paiement.html'
     context_object_name = 'paiement'
+
+    def get_queryset(self):
+        return Paiement.objects.select_related(
+            'rendez_vous__patient__user',
+            'rendez_vous__medecin__user',
+            'consultation__dossier__patient__user',
+            'consultation__medecin__user',
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        paiement = self.object
+        consultation = paiement.consultation
+        if consultation:
+            ctx['historique_paiements'] = Paiement.objects.filter(
+                consultation=consultation
+            ).exclude(pk=paiement.pk).order_by('-date_creation')
+        else:
+            ctx['historique_paiements'] = Paiement.objects.none()
+        return ctx
 
 
 class WebhookDjomyView(View):

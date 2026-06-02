@@ -1,39 +1,52 @@
 {% load static %}
-<header class="h-16 bg-surface-container-low/50 border-b border-outline-variant/10 flex items-center justify-between px-6 sticky top-0 z-20 backdrop-blur-md">
-  <!-- Mobile menu button + Page title -->
-  <div class="flex items-center gap-4">
-    <button class="lg:hidden p-2 rounded-xl text-on-surface-variant hover:bg-surface-container" onclick="toggleSidebar()">
+<header class="navbar-container h-14 flex items-center justify-between px-6 sticky top-0 z-20">
+
+  <!-- Gauche : hamburger + titre page -->
+  <div class="flex items-center gap-4 min-w-0">
+    <button class="lg:hidden p-2 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors flex-shrink-0" onclick="toggleSidebar()">
       <span class="material-symbols-outlined">menu</span>
     </button>
-    <div>
-      <h1 class="font-headline font-semibold text-on-surface text-lg leading-tight">
+    <div class="min-w-0">
+      <h1 class="font-headline font-semibold text-on-surface text-base leading-tight truncate">
         {% block page_title %}HealthConnect{% endblock %}
       </h1>
-      <p class="text-xs text-on-surface-variant hidden sm:block">{% block page_subtitle %}{% endblock %}</p>
+      <p class="text-[11px] text-on-surface-variant/60 hidden sm:block truncate">{% block page_subtitle %}{% endblock %}</p>
     </div>
   </div>
 
-  <!-- Right actions -->
-  <div class="flex items-center gap-3">
-    <!-- Notifications -->
-    <a href="{% url 'notifications:liste' %}" class="relative p-2 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors">
-      <span class="material-symbols-outlined">notifications</span>
+  <!-- Droite : actions -->
+  <div class="flex items-center gap-2 flex-shrink-0">
+
+    <!-- Cloche notifications -->
+    {% if request.user.is_authenticated %}
+    <a href="{% url 'notifications:liste' %}" class="relative p-2 rounded-xl text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" title="Notifications">
+      <span class="material-symbols-outlined text-xl {% if nb_notifs_non_lues %}icon-filled text-primary-container{% else %}group-hover:icon-filled{% endif %}">notifications</span>
       {% if nb_notifs_non_lues %}
-      <span class="absolute top-1 right-1 w-5 h-5 text-[11px] leading-5 text-white bg-error rounded-full flex items-center justify-center">{{ nb_notifs_non_lues }}</span>
+      <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-on-error text-[10px] font-bold flex items-center justify-center leading-none">
+        {% if nb_notifs_non_lues > 99 %}99+{% else %}{{ nb_notifs_non_lues }}{% endif %}
+      </span>
       {% endif %}
     </a>
+    {% endif %}
 
-    <!-- User avatar -->
+    <!-- Séparateur vertical -->
+    <div class="w-px h-6 bg-white/[0.06] mx-1"></div>
+
+    <!-- Avatar utilisateur -->
     {% if request.user.is_authenticated %}
-    <div class="flex items-center gap-2 cursor-pointer group">
-      <div class="w-9 h-9 rounded-full bg-primary-container/20 border border-primary-container/30 flex items-center justify-center text-primary font-semibold text-sm">
-        {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+    <a href="{% url 'users:profile' %}" class="flex items-center gap-2.5 hover:opacity-80 transition-opacity group">
+      <div class="w-8 h-8 rounded-full overflow-hidden border border-primary-container/25 flex items-center justify-center text-primary font-semibold text-xs flex-shrink-0 bg-primary-container/15 avatar-ring group-hover:border-primary-container/50 transition-all">
+        {% if request.user.photo %}
+          <img src="{{ request.user.photo.url }}" class="w-full h-full object-cover" alt="">
+        {% else %}
+          <span class="font-headline font-bold text-sm">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</span>
+        {% endif %}
       </div>
-      <div class="hidden sm:block text-right">
-        <div class="text-sm font-medium text-on-surface leading-tight">{{ request.user.get_full_name|default:request.user.email }}</div>
-        <div class="text-xs text-on-surface-variant capitalize">{{ request.user.role }}</div>
+      <div class="hidden sm:block text-right leading-tight">
+        <div class="text-sm font-semibold text-on-surface font-headline">{{ request.user.get_full_name|default:request.user.email|truncatechars:20 }}</div>
+        <div class="text-[10px] text-on-surface-variant/60 capitalize tracking-wide">{{ request.user.role }}</div>
       </div>
-    </div>
+    </a>
     {% endif %}
   </div>
 </header>

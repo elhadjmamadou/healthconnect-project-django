@@ -7,8 +7,16 @@ from .models import User
 
 
 @receiver(post_save, sender=User)
-def create_medecin_profile(sender, instance, created, **kwargs):
-    if created and instance.role == User.Role.MEDECIN:
+def create_role_profile(sender, instance, created, **kwargs):
+    """Crée automatiquement le profil Médecin ou Patient selon le rôle à l'inscription."""
+    if not created:
+        return
+
+    if instance.role == User.Role.MEDECIN:
         from medecins.models import Medecin
         numero = f"ORD-{uuid.uuid4().hex[:8].upper()}"
-        Medecin.objects.create(user=instance, numero_ordre=numero)
+        Medecin.objects.get_or_create(user=instance, defaults={'numero_ordre': numero})
+
+    elif instance.role == User.Role.PATIENT:
+        from patients.models import Patient
+        Patient.objects.get_or_create(user=instance)

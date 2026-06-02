@@ -14,10 +14,12 @@
       <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Gestion des Médecins</h2>
       <p class="text-on-surface-variant text-sm mt-1">{{ page_obj.paginator.count }} médecin{{ page_obj.paginator.count|pluralize }} enregistré{{ page_obj.paginator.count|pluralize }}</p>
     </div>
-    <a href="#" class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-semibold glow-button font-headline">
+    {% if request.user.is_admin_role or request.user.is_staff %}
+    <a href="/admin/medecins/medecin/add/" class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-semibold glow-button font-headline">
       <span class="material-symbols-outlined text-base">person_add</span>
       Ajouter un médecin
     </a>
+    {% endif %}
   </div>
 
   <!-- Filtres -->
@@ -90,12 +92,17 @@
           class="flex-1 text-center bg-surface-container-highest text-primary text-xs font-semibold rounded-xl py-2 hover:bg-surface-container-high transition-colors">
           Voir profil
         </a>
-        <a href="#" class="flex-1 text-center bg-surface-container-highest text-on-surface-variant text-xs font-semibold rounded-xl py-2 hover:bg-surface-container-high transition-colors">
+        {% if request.user.is_admin_role or request.user.is_staff %}
+        <a href="/admin/medecins/medecin/{{ medecin.pk }}/change/"
+          class="flex-1 text-center bg-surface-container-highest text-on-surface-variant text-xs font-semibold rounded-xl py-2 hover:bg-surface-container-high transition-colors">
           Modifier
         </a>
-        <button class="p-2 rounded-xl bg-surface-container-highest text-error/60 hover:text-error hover:bg-error/10 transition-colors">
+        <a href="/admin/medecins/medecin/{{ medecin.pk }}/delete/"
+          class="p-2 rounded-xl bg-surface-container-highest text-error/60 hover:text-error hover:bg-error/10 transition-colors"
+          onclick="return confirm('Supprimer ce médecin ?')">
           <span class="material-symbols-outlined text-base">delete</span>
-        </button>
+        </a>
+        {% endif %}
       </div>
     </div>
     {% endfor %}

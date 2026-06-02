@@ -94,6 +94,9 @@
               {% if p.rendez_vous %}
               <div class="text-sm font-medium text-on-surface">{{ p.rendez_vous.patient.nom_complet }}</div>
               <div class="text-xs text-on-surface-variant">RDV {{ p.rendez_vous.date_rdv|date:"d/m/Y" }}</div>
+              {% elif p.consultation %}
+              <div class="text-sm font-medium text-on-surface">{{ p.consultation.dossier.patient.nom_complet }}</div>
+              <div class="text-xs text-on-surface-variant">Historique consultation {{ p.consultation.date_consultation|date:"d/m/Y" }}</div>
               {% else %}
               <span class="text-on-surface-variant/40 text-sm">—</span>
               {% endif %}
