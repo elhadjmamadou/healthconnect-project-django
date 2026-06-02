@@ -24,28 +24,21 @@
         <span class="material-symbols-outlined text-secondary">event_available</span>
         <span class="text-xs text-on-surface-variant uppercase tracking-wide">Libres</span>
       </div>
-      <div class="font-headline font-bold text-2xl text-secondary">
-        {% with count=0 %}
-          {% for d in disponibilites %}{% if d.statut_creneau == 'libre' %}{{ forloop.counter }}{% endif %}{% endfor %}
-        {% endwith %}
-      </div>
+      <div class="font-headline font-bold text-2xl text-secondary">{{ libres_count }}</div>
     </div>
-    {% endwith %}
     <div class="bg-primary-container/10 border border-primary-container/20 rounded-2xl p-5">
       <div class="flex items-center gap-3 mb-2">
         <span class="material-symbols-outlined text-primary-container">event_busy</span>
         <span class="text-xs text-on-surface-variant uppercase tracking-wide">Réservés</span>
       </div>
-      <div class="font-headline font-bold text-2xl text-primary-container">
-        {% for d in disponibilites %}{% if d.statut_creneau == 'reserve' %}{{ forloop.counter }}{% endif %}{% endfor %}
-      </div>
+      <div class="font-headline font-bold text-2xl text-primary-container">{{ reserves_count }}</div>
     </div>
     <div class="bg-surface-container rounded-2xl p-5">
       <div class="flex items-center gap-3 mb-2">
         <span class="material-symbols-outlined text-on-surface-variant">schedule</span>
         <span class="text-xs text-on-surface-variant uppercase tracking-wide">Total</span>
       </div>
-      <div class="font-headline font-bold text-2xl text-on-surface">{{ disponibilites|length }}</div>
+      <div class="font-headline font-bold text-2xl text-on-surface">{{ total_count }}</div>
     </div>
   </div>
 
@@ -60,6 +53,7 @@
             <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Durée</th>
             <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Type</th>
             <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Statut</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -83,10 +77,54 @@
                 {{ d.get_statut_creneau_display }}
               </span>
             </td>
+            <td class="px-4 py-4 text-center space-y-2">
+              {% if d.est_libre %}
+              <form method="post" action="{% url 'disponibilites:supprimer' d.pk %}" onsubmit="return confirm('Supprimer ce créneau libre ?');" class="inline-block">
+                {% csrf_token %}
+                <button type="submit" class="text-error/80 hover:text-error text-xs font-medium border border-error/20 rounded-xl px-3 py-2 hover:bg-error/10 transition-colors">Supprimer</button>
+              </form>
+              {% else %}
+              <span class="text-xs text-on-surface-variant">Modification bloquée</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr class="bg-surface-container-low">
+            <td colspan="6" class="px-6 py-4">
+              {% if d.est_libre %}
+              <form method="post" action="{% url 'disponibilites:modifier' d.pk %}" class="grid gap-3 md:grid-cols-4 items-end">
+                {% csrf_token %}
+                <label class="block text-xs text-on-surface-variant">
+                  Date
+                  <input type="date" name="date_disponibilite" value="{{ d.date_disponibilite|date:'Y-m-d' }}" required class="mt-1 w-full rounded-xl border border-outline px-3 py-2 bg-surface" />
+                </label>
+                <label class="block text-xs text-on-surface-variant">
+                  Début
+                  <input type="time" name="heure_debut" value="{{ d.heure_debut|time:'H:i' }}" required class="mt-1 w-full rounded-xl border border-outline px-3 py-2 bg-surface" />
+                </label>
+                <label class="block text-xs text-on-surface-variant">
+                  Fin
+                  <input type="time" name="heure_fin" value="{{ d.heure_fin|time:'H:i' }}" required class="mt-1 w-full rounded-xl border border-outline px-3 py-2 bg-surface" />
+                </label>
+                <label class="block text-xs text-on-surface-variant">
+                  Type
+                  <select name="type_creneau" class="mt-1 w-full rounded-xl border border-outline px-3 py-2 bg-surface">
+                    {% for key, label in d.TypeCreneau.choices %}
+                      <option value="{{ key }}" {% if d.type_creneau == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </label>
+                <div class="md:col-span-4 flex flex-wrap gap-3">
+                  <button type="submit" class="text-primary hover:text-primary-dark text-xs font-medium border border-primary/20 rounded-xl px-4 py-2 hover:bg-primary/10 transition-colors">Enregistrer</button>
+                </div>
+              </form>
+              {% else %}
+              <div class="text-sm text-on-surface-variant">Ce créneau n'est pas libre et ne peut pas être modifié depuis ici.</div>
+              {% endif %}
+            </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="px-6 py-16 text-center text-on-surface-variant/40 text-sm">
+            <td colspan="6" class="px-6 py-16 text-center text-on-surface-variant/40 text-sm">
               <span class="material-symbols-outlined text-4xl block mb-2">event</span>
               Aucun créneau configuré
             </td>

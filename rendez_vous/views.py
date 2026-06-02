@@ -1,11 +1,12 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
-from django.views.generic import ListView
+from django.views.generic import DetailView, ListView
 
-from users.mixins import PatientRequiredMixin
+from users.mixins import MedecinRequiredMixin, PatientRequiredMixin
 from medecins.models import Medecin, Specialite
 from disponibilites.models import Disponibilite
 from .models import RendezVous
@@ -83,10 +84,10 @@ class ReservationRDVView(PatientRequiredMixin, View):
         elif action == 'confirmer':
             dispo_id = request.session.get('rdv_dispo_id')
             motif = request.POST.get('motif', '')
-            canal = request.POST.get('canal', 'plateforme')
+            canal = request.POST.get('canal', RendezVous.Canal.PLATEFORME)
 
             try:
-                dispo = Disponibilite.objects.get(pk=dispo_id, statut_creneau='libre')
+                dispo = Disponibilite.objects.get(pk=dispo_id, statut_creneau=Disponibilite.StatutCreneau.LIBRE)
                 patient = request.user.patient_profile
                 rdv = RendezVous.objects.create(
                     patient=patient,
@@ -97,7 +98,7 @@ class ReservationRDVView(PatientRequiredMixin, View):
                     heure_fin=dispo.heure_fin,
                     motif=motif,
                     canal=canal,
-                    statut_rdv='en_attente',
+                    statut_rdv=RendezVous.StatutRdv.EN_ATTENTE,
                 )
                 request.session.pop('rdv_medecin_id', None)
                 request.session.pop('rdv_dispo_id', None)
@@ -108,6 +109,91 @@ class ReservationRDVView(PatientRequiredMixin, View):
                 return redirect(f"{request.path}?step=2")
 
         return redirect(f"{request.path}?step=1")
+
+
+class RendezVousAccessMixin(LoginRequiredMixin):
+    def get_object(self):
+        rdv = get_object_or_404(
+            RendezVous.objects.select_related('patient__user', 'medecin__user'),
+            pk=self.kwargs['pk']
+        )
+        user = self.request.user
+        if user.is_medecin and rdv.medecin.user == user:
+            return rdv
+        if user.is_patient and rdv.patient.user == user:
+            return rdv
+        raise PermissionDenied
+
+
+class DetailRDVView(RendezVousAccessMixin, DetailView):
+    model = RendezVous
+    template_name = 'rendez_vous/detail_rdv.html'
+    context_object_name = 'rdv'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            context['paiement'] = self.object.paiement
+        except ObjectDoesNotExist:
+            context['paiement'] = None
+        return context
+
+
+class ConfirmerRDVView(MedecinRequiredMixin, View):
+    def post(self, request, pk):
+        rdv = get_object_or_404(
+            RendezVous.objects.select_related('medecin__user'),
+            pk=pk,
+        )
+        if rdv.medecin.user != request.user:
+            raise PermissionDenied
+        if rdv.statut_rdv == RendezVous.StatutRdv.EN_ATTENTE:
+            rdv.statut_rdv = RendezVous.StatutRdv.CONFIRME
+            rdv.save()
+            messages.success(request, 'Rendez-vous confirmé.')
+        else:
+            messages.warning(request, 'Ce rendez-vous ne peut pas être confirmé.')
+        return redirect('rendez_vous:detail', pk=rdv.pk)
+
+
+class RefuserRDVView(MedecinRequiredMixin, View):
+    def post(self, request, pk):
+        rdv = get_object_or_404(
+            RendezVous.objects.select_related('medecin__user'),
+            pk=pk,
+        )
+        if rdv.medecin.user != request.user:
+            raise PermissionDenied
+        if rdv.statut_rdv == RendezVous.StatutRdv.EN_ATTENTE:
+            rdv.statut_rdv = RendezVous.StatutRdv.ANNULE_MEDECIN
+            rdv.save()
+            messages.success(request, 'Rendez-vous refusé par le médecin.')
+        else:
+            messages.warning(request, 'Ce rendez-vous ne peut pas être refusé.')
+        return redirect('rendez_vous:detail', pk=rdv.pk)
+
+
+class AnnulerRDVView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        rdv = get_object_or_404(
+            RendezVous.objects.select_related('patient__user', 'medecin__user'),
+            pk=pk,
+        )
+        user = request.user
+        if not rdv.est_annulable:
+            messages.error(request, 'Ce rendez-vous ne peut plus être annulé.')
+            return redirect('rendez_vous:detail', pk=rdv.pk)
+
+        if user.is_patient and rdv.patient.user == user:
+            rdv.statut_rdv = RendezVous.StatutRdv.ANNULE_PATIENT
+        elif user.is_medecin and rdv.medecin.user == user:
+            rdv.statut_rdv = RendezVous.StatutRdv.ANNULE_MEDECIN
+        else:
+            raise PermissionDenied
+
+        rdv.save()
+        messages.success(request, 'Rendez-vous annulé.')
+        return redirect('rendez_vous:liste')
 
 
 class ListeRDVView(LoginRequiredMixin, ListView):
@@ -126,14 +212,3 @@ class ListeRDVView(LoginRequiredMixin, ListView):
         return qs.order_by('-date_rdv', '-heure_debut')
 
 
-class AnnulerRDVView(LoginRequiredMixin, View):
-    def post(self, request, pk):
-        rdv = RendezVous.objects.get(pk=pk)
-        if rdv.est_annulable:
-            if request.user.is_patient:
-                rdv.statut_rdv = 'annule_patient'
-            else:
-                rdv.statut_rdv = 'annule_medecin'
-            rdv.save()
-            messages.success(request, 'Rendez-vous annulé.')
-        return redirect('rendez_vous:liste')
