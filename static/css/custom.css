@@ -84,6 +84,11 @@ h1, h2, h3, h4, h5, h6 {
   color: #e4d6ff;
   background: rgba(228, 214, 255, 0.07);
 }
+.chip-info {
+  border: 1px solid rgba(138, 180, 248, 0.3);
+  color: #8ab4f8;
+  background: rgba(138, 180, 248, 0.07);
+}
 
 /* Sidebar nav active state */
 .nav-active {
