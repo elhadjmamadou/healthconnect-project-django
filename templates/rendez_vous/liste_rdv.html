@@ -79,8 +79,13 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <span class="chip-base chip-info text-xs">{{ rdv.get_canal_display }}</span>
+          <a href="{% url 'rendez_vous:detail' rdv.pk %}"
+            class="flex items-center gap-1 text-primary hover:text-primary-dark text-xs font-medium border border-primary/20 rounded-xl px-3 py-2 hover:bg-primary/10 transition-colors">
+            <span class="material-symbols-outlined text-sm">visibility</span>
+            Détails
+          </a>
           {% if rdv.est_annulable %}
           <form method="post" action="{% url 'rendez_vous:annuler' rdv.pk %}" onsubmit="return confirm('Confirmer l\'annulation ?')">
             {% csrf_token %}
