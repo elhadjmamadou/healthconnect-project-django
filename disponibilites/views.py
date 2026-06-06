@@ -44,6 +44,24 @@ class ListeDisponibilitesView(MedecinRequiredMixin, ListView):
         return context
 
 
+class AjouterDisponibiliteView(MedecinRequiredMixin, View):
+    def post(self, request):
+        medecin = request.user.medecin_profile
+        instance = Disponibilite(medecin=medecin, statut_creneau=Disponibilite.StatutCreneau.LIBRE)
+        form = DisponibiliteForm(request.POST, instance=instance)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, 'Créneau ajouté avec succès.')
+            except Exception as e:
+                messages.error(request, str(e))
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field} : {error}')
+        return redirect('disponibilites:liste')
+
+
 class ModifierDisponibiliteView(MedecinRequiredMixin, View):
     def post(self, request, pk):
         disponibilite = get_object_or_404(

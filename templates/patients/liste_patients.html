@@ -14,6 +14,12 @@
       <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Gestion des Patients</h2>
       <p class="text-on-surface-variant text-sm mt-1">{{ page_obj.paginator.count }} patient{{ page_obj.paginator.count|pluralize }} enregistré{{ page_obj.paginator.count|pluralize }}</p>
     </div>
+    {% if request.user.is_admin_role or request.user.is_staff %}
+    <a href="{% url 'patients:creer' %}" class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-semibold glow-button font-headline">
+      <span class="material-symbols-outlined text-base">person_add</span>
+      Ajouter un patient
+    </a>
+    {% endif %}
   </div>
 
   <!-- Filtres -->

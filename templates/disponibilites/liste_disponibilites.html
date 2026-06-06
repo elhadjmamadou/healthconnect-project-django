@@ -16,9 +16,46 @@
     </div>
   </div>
 
+  <!-- Formulaire ajout créneau -->
+  <div class="bg-surface-container rounded-2xl p-6">
+    <h3 class="font-headline font-semibold text-on-surface mb-4 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary text-xl">add_circle</span>
+      Ajouter un créneau
+    </h3>
+    <form method="post" action="{% url 'disponibilites:ajouter' %}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+      {% csrf_token %}
+      <label class="block text-xs text-on-surface-variant font-medium">
+        Date
+        <input type="date" name="date_disponibilite" required
+          class="mt-1 w-full rounded-xl border border-outline-variant/40 px-3 py-2.5 bg-surface text-sm text-on-surface" />
+      </label>
+      <label class="block text-xs text-on-surface-variant font-medium">
+        Heure début
+        <input type="time" name="heure_debut" required
+          class="mt-1 w-full rounded-xl border border-outline-variant/40 px-3 py-2.5 bg-surface text-sm text-on-surface" />
+      </label>
+      <label class="block text-xs text-on-surface-variant font-medium">
+        Heure fin
+        <input type="time" name="heure_fin" required
+          class="mt-1 w-full rounded-xl border border-outline-variant/40 px-3 py-2.5 bg-surface text-sm text-on-surface" />
+      </label>
+      <label class="block text-xs text-on-surface-variant font-medium">
+        Type
+        <select name="type_creneau" class="mt-1 w-full rounded-xl border border-outline-variant/40 px-3 py-2.5 bg-surface text-sm text-on-surface">
+          <option value="presentiel">Présentiel</option>
+          <option value="teleconsultation">Téléconsultation</option>
+        </select>
+      </label>
+      <div class="sm:col-span-2 lg:col-span-4">
+        <button type="submit" class="bg-primary-container text-on-primary-container rounded-xl px-6 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity">
+          Ajouter le créneau
+        </button>
+      </div>
+    </form>
+  </div>
+
   <!-- Stats rapides -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-    {% with libres=disponibilites|length %}
     <div class="bg-secondary/10 border border-secondary/20 rounded-2xl p-5">
       <div class="flex items-center gap-3 mb-2">
         <span class="material-symbols-outlined text-secondary">event_available</span>

@@ -23,9 +23,13 @@
           <span class="material-symbols-outlined text-xl">dashboard</span>
           <span>Tableau de bord</span>
         </a>
-        <a href="{% url 'medecins:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm {% if 'medecins' in request.resolver_match.namespace %}nav-active{% endif %}">
+        <a href="{% url 'medecins:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm {% if request.resolver_match.namespace == 'medecins' and request.resolver_match.url_name == 'liste' %}nav-active{% endif %}">
           <span class="material-symbols-outlined text-xl">medical_services</span>
           <span>Médecins</span>
+        </a>
+        <a href="{% url 'medecins:specialites' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm {% if request.resolver_match.url_name == 'specialites' %}nav-active{% endif %}">
+          <span class="material-symbols-outlined text-xl">category</span>
+          <span>Spécialités</span>
         </a>
         <a href="{% url 'patients:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm {% if 'patients' in request.resolver_match.namespace %}nav-active{% endif %}">
           <span class="material-symbols-outlined text-xl">group</span>
@@ -35,8 +39,8 @@
           <span class="material-symbols-outlined text-xl">calendar_today</span>
           <span>Rendez-vous</span>
         </a>
-        <a href="{% url 'consultations:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">
-          <span class="material-symbols-outlined text-xl">description</span>
+        <a href="{% url 'consultations:liste_dossiers' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm {% if request.resolver_match.url_name == 'liste_dossiers' %}nav-active{% endif %}">
+          <span class="material-symbols-outlined text-xl">folder_shared</span>
           <span>Dossiers médicaux</span>
         </a>
         <a href="{% url 'paiements:liste' %}" class="nav-item flex items-center gap-3 py-3 px-4 rounded-xl text-sm">

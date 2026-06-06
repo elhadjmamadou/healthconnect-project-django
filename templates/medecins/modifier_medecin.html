@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier — Dr. {{ medecin.nom_complet }}{% endblock %}
+{% block page_title %}Modifier Médecin{% endblock %}
+{% block page_subtitle %}Dr. {{ medecin.nom_complet }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-sm text-on-surface-variant">
+    <a href="{% url 'medecins:liste' %}" class="hover:text-on-surface transition-colors">Médecins</a>
+    <span class="material-symbols-outlined text-base">chevron_right</span>
+    <a href="{% url 'medecins:detail' medecin.pk %}" class="hover:text-on-surface transition-colors">Dr. {{ medecin.nom_complet }}</a>
+    <span class="material-symbols-outlined text-base">chevron_right</span>
+    <span class="text-on-surface">Modifier</span>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Informations du compte -->
+    <div class="bg-surface-container rounded-2xl p-6 mb-4">
+      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-xl">account_circle</span>
+        Informations du compte
+      </h3>
+
+      {% if user_form.non_field_errors %}
+      <div class="alert-error rounded-xl px-4 py-3 mb-4 text-sm">{{ user_form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Prénom *</label>
+          {{ user_form.first_name }}
+          {% if user_form.first_name.errors %}<p class="text-error text-xs mt-1">{{ user_form.first_name.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Nom *</label>
+          {{ user_form.last_name }}
+          {% if user_form.last_name.errors %}<p class="text-error text-xs mt-1">{{ user_form.last_name.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Email *</label>
+          {{ user_form.email }}
+          {% if user_form.email.errors %}<p class="text-error text-xs mt-1">{{ user_form.email.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Téléphone</label>
+          {{ user_form.telephone }}
+          {% if user_form.telephone.errors %}<p class="text-error text-xs mt-1">{{ user_form.telephone.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Statut</label>
+          {{ user_form.statut }}
+          {% if user_form.statut.errors %}<p class="text-error text-xs mt-1">{{ user_form.statut.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Profil médecin -->
+    <div class="bg-surface-container rounded-2xl p-6 mb-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-xl">medical_services</span>
+        Profil médecin
+      </h3>
+
+      {% if profile_form.non_field_errors %}
+      <div class="alert-error rounded-xl px-4 py-3 mb-4 text-sm">{{ profile_form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">N° d'ordre *</label>
+          {{ profile_form.numero_ordre }}
+          {% if profile_form.numero_ordre.errors %}<p class="text-error text-xs mt-1">{{ profile_form.numero_ordre.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Tarif consultation (GNF)</label>
+          {{ profile_form.tarif_consultation }}
+          {% if profile_form.tarif_consultation.errors %}<p class="text-error text-xs mt-1">{{ profile_form.tarif_consultation.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Mode d'exercice</label>
+          {{ profile_form.mode_exercice }}
+          {% if profile_form.mode_exercice.errors %}<p class="text-error text-xs mt-1">{{ profile_form.mode_exercice.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="flex items-center gap-3 pt-5">
+          {{ profile_form.accepte_nouveaux_patients }}
+          <label class="text-sm text-on-surface">Accepte de nouveaux patients</label>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Biographie</label>
+          {{ profile_form.biographie }}
+          {% if profile_form.biographie.errors %}<p class="text-error text-xs mt-1">{{ profile_form.biographie.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-3">Spécialités</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {% for choice in profile_form.specialites %}
+            <label class="flex items-center gap-2 text-sm text-on-surface cursor-pointer bg-surface-container-low rounded-lg px-3 py-2 hover:bg-surface-container-high transition-colors">
+              {{ choice.tag }}
+              <span>{{ choice.choice_label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          {% if profile_form.specialites.errors %}<p class="text-error text-xs mt-1">{{ profile_form.specialites.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" class="glow-btn rounded-xl px-6 py-3 text-sm font-headline font-semibold flex items-center gap-2">
+        <span class="material-symbols-outlined text-base">save</span>
+        Enregistrer
+      </button>
+      <a href="{% url 'medecins:detail' medecin.pk %}" class="bg-surface-container text-on-surface-variant rounded-xl px-6 py-3 text-sm hover:bg-surface-container-high transition-colors">
+        Annuler
+      </a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

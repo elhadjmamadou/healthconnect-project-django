@@ -5,6 +5,8 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.db import models
+from django.db.models import Count
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView, View
 
 from users.mixins import AdminRequiredMixin, MedecinRequiredMixin
@@ -35,6 +37,37 @@ class DossierMedicalView(LoginRequiredMixin, DetailView):
         ctx['consultations'] = self.object.consultations.select_related(
             'medecin__user'
         ).order_by('-date_consultation')
+        return ctx
+
+
+class ListeDossiersView(LoginRequiredMixin, ListView):
+    model = DossierMedical
+    template_name = 'consultations/liste_dossiers.html'
+    context_object_name = 'dossiers'
+    paginate_by = 20
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_staff or request.user.is_admin_role):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = DossierMedical.objects.select_related(
+            'patient__user'
+        ).annotate(nb_consultations=Count('consultations')).order_by('-date_creation')
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(
+                models.Q(patient__user__first_name__icontains=q) |
+                models.Q(patient__user__last_name__icontains=q) |
+                models.Q(numero_dossier__icontains=q)
+            )
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['q'] = self.request.GET.get('q', '')
         return ctx
 
 
@@ -145,3 +178,19 @@ class DetailConsultationView(LoginRequiredMixin, DetailView):
             self.object.medecin == self.request.user.medecin_profile
         )
         return ctx
+
+
+class SupprimerConsultationView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        qs = Consultation.objects.select_related('medecin__user', 'dossier')
+        if request.user.is_staff or request.user.is_admin_role:
+            consultation = get_object_or_404(qs, pk=pk)
+        elif request.user.is_medecin:
+            consultation = get_object_or_404(qs, pk=pk, medecin=request.user.medecin_profile)
+        else:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
+        dossier_pk = consultation.dossier.pk
+        consultation.delete()
+        messages.success(request, 'Consultation supprimée.')
+        return redirect('consultations:dossier', pk=dossier_pk)

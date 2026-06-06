@@ -58,3 +58,10 @@ class MarquerToutLuView(LoginRequiredMixin, View):
             date_lecture=timezone.now(),
         )
         return redirect('notifications:liste')
+
+
+class SupprimerNotificationView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        notif = get_object_or_404(Notification, pk=pk, utilisateur=request.user)
+        notif.delete()
+        return redirect('notifications:liste')

@@ -99,6 +99,15 @@
             <span class="material-symbols-outlined text-base">mark_email_read</span>
           </button>
           {% endif %}
+          <form method="post" action="{% url 'notifications:supprimer' notif.pk %}"
+            onsubmit="return confirm('Supprimer cette notification ?')">
+            {% csrf_token %}
+            <button type="submit"
+              class="p-1.5 rounded-lg text-on-surface-variant/40 hover:text-error hover:bg-error/10 transition-colors"
+              title="Supprimer">
+              <span class="material-symbols-outlined text-base">delete</span>
+            </button>
+          </form>
         </div>
 
       </div>

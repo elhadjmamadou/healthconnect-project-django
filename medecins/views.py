@@ -1,11 +1,15 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.db.models import Count, Q
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
 from users.mixins import AdminRequiredMixin, MedecinRequiredMixin
 
+from .forms import CreerMedecinUserForm, MedecinProfileForm, ModifierMedecinUserForm, SpecialiteForm
 from .models import Medecin, Specialite
 
 
@@ -89,3 +93,108 @@ class DetailMedecinView(LoginRequiredMixin, DetailView):
     model = Medecin
     template_name = 'medecins/detail_medecin.html'
     context_object_name = 'medecin'
+
+
+class CreerMedecinView(AdminRequiredMixin, View):
+    template_name = 'medecins/creer_medecin.html'
+
+    def get(self, request):
+        return render(request, self.template_name, {
+            'user_form': CreerMedecinUserForm(),
+            'profile_form': MedecinProfileForm(),
+        })
+
+    @transaction.atomic
+    def post(self, request):
+        user_form = CreerMedecinUserForm(request.POST)
+        profile_form = MedecinProfileForm(request.POST)
+        if user_form.is_valid() and profile_form.is_valid():
+            user = user_form.save()
+            medecin = profile_form.save(commit=False)
+            medecin.user = user
+            medecin.save()
+            profile_form.save_m2m()
+            messages.success(request, f'Médecin Dr. {user.get_full_name()} créé avec succès.')
+            return redirect('medecins:detail', pk=medecin.pk)
+        return render(request, self.template_name, {
+            'user_form': user_form,
+            'profile_form': profile_form,
+        })
+
+
+class ModifierMedecinView(AdminRequiredMixin, View):
+    template_name = 'medecins/modifier_medecin.html'
+
+    def _get_medecin(self, pk):
+        return get_object_or_404(
+            Medecin.objects.select_related('user').prefetch_related('specialites'), pk=pk
+        )
+
+    def get(self, request, pk):
+        medecin = self._get_medecin(pk)
+        return render(request, self.template_name, {
+            'medecin': medecin,
+            'user_form': ModifierMedecinUserForm(instance=medecin.user),
+            'profile_form': MedecinProfileForm(instance=medecin),
+        })
+
+    @transaction.atomic
+    def post(self, request, pk):
+        medecin = self._get_medecin(pk)
+        user_form = ModifierMedecinUserForm(request.POST, instance=medecin.user)
+        profile_form = MedecinProfileForm(request.POST, instance=medecin)
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Médecin modifié avec succès.')
+            return redirect('medecins:detail', pk=medecin.pk)
+        return render(request, self.template_name, {
+            'medecin': medecin,
+            'user_form': user_form,
+            'profile_form': profile_form,
+        })
+
+
+class SupprimerMedecinView(AdminRequiredMixin, View):
+    def post(self, request, pk):
+        medecin = get_object_or_404(Medecin.objects.select_related('user'), pk=pk)
+        nom = medecin.nom_complet
+        medecin.user.delete()
+        messages.success(request, f'Médecin Dr. {nom} supprimé.')
+        return redirect('medecins:liste')
+
+
+class ListeSpecialitesView(AdminRequiredMixin, ListView):
+    model = Specialite
+    template_name = 'medecins/specialites.html'
+    context_object_name = 'specialites'
+
+    def get_queryset(self):
+        return Specialite.objects.annotate(nb_medecins=Count('medecins')).order_by('libelle')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['form'] = SpecialiteForm()
+        return ctx
+
+
+class CreerSpecialiteView(AdminRequiredMixin, View):
+    def post(self, request):
+        form = SpecialiteForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Spécialité ajoutée.')
+        else:
+            for errors in form.errors.values():
+                for error in errors:
+                    messages.error(request, error)
+        return redirect('medecins:specialites')
+
+
+class SupprimerSpecialiteView(AdminRequiredMixin, View):
+    def post(self, request, pk):
+        spec = get_object_or_404(Specialite, pk=pk)
+        libelle = spec.libelle
+        spec.delete()
+        messages.success(request, f'Spécialité "{libelle}" supprimée.')
+        return redirect('medecins:specialites')

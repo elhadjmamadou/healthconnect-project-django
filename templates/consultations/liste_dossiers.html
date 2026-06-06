@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dossiers Médicaux{% endblock %}
+{% block page_title %}Dossiers Médicaux{% endblock %}
+{% block page_subtitle %}Liste de tous les dossiers patients{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Dossiers Médicaux</h2>
+      <p class="text-on-surface-variant text-sm mt-1">{{ paginator.count }} dossier{{ paginator.count|pluralize }} au total</p>
+    </div>
+    <a href="{% url 'consultations:liste' %}" class="btn-secondary flex items-center gap-2 text-sm px-4 py-2 rounded-xl">
+      <span class="material-symbols-outlined text-base">list</span>
+      Voir toutes les consultations
+    </a>
+  </div>
+
+  <!-- Recherche -->
+  <form method="get" class="flex gap-3">
+    <div class="relative flex-1 max-w-sm">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-base">search</span>
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher un patient ou n° dossier…"
+        class="w-full bg-surface-container border border-outline-variant/30 text-on-surface rounded-xl pl-9 pr-4 py-2.5 text-sm" />
+    </div>
+    <button type="submit" class="bg-primary-container text-on-primary-container rounded-xl px-4 py-2.5 text-sm font-medium">
+      Rechercher
+    </button>
+    {% if q %}
+    <a href="{% url 'consultations:liste_dossiers' %}" class="rounded-xl px-4 py-2.5 text-sm text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container transition-colors">
+      Effacer
+    </a>
+    {% endif %}
+  </form>
+
+  <!-- Liste -->
+  <div class="bg-surface-container rounded-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="table-header-row">
+          <tr>
+            <th class="text-left px-6 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Patient</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">N° Dossier</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Statut</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Consultations</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Ouvert le</th>
+            <th class="text-center px-4 py-4 text-xs uppercase tracking-widest text-on-surface-variant font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dossier in dossiers %}
+          <tr class="{% if forloop.even %}table-row-even{% else %}table-row-odd{% endif %} transition-colors">
+
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-primary-container/15 flex items-center justify-center text-primary font-semibold text-sm flex-shrink-0">
+                  {{ dossier.patient.user.first_name|first|upper }}{{ dossier.patient.user.last_name|first|upper }}
+                </div>
+                <div>
+                  <div class="text-sm font-medium text-on-surface">{{ dossier.patient.nom_complet }}</div>
+                  <div class="text-xs text-on-surface-variant/60">{{ dossier.patient.user.email }}</div>
+                </div>
+              </div>
+            </td>
+
+            <td class="px-4 py-4 text-center">
+              <span class="font-mono text-xs text-on-surface-variant">{{ dossier.numero_dossier }}</span>
+            </td>
+
+            <td class="px-4 py-4 text-center">
+              <span class="chip-base text-xs
+                {% if dossier.statut_dossier == 'actif' %}chip-success
+                {% elif dossier.statut_dossier == 'archive' %}chip-info
+                {% else %}chip-warning{% endif %}">
+                {{ dossier.get_statut_dossier_display }}
+              </span>
+            </td>
+
+            <td class="px-4 py-4 text-center text-sm text-on-surface-variant">
+              {{ dossier.nb_consultations }}
+            </td>
+
+            <td class="px-4 py-4 text-center text-sm text-on-surface-variant">
+              {{ dossier.date_ouverture|date:"d/m/Y" }}
+            </td>
+
+            <td class="px-4 py-4 text-center">
+              <a href="{% url 'consultations:dossier' dossier.pk %}"
+                class="text-primary hover:text-primary-container text-xs font-medium border border-primary/20 rounded-xl px-3 py-2 hover:bg-primary/10 transition-colors">
+                Voir le dossier
+              </a>
+            </td>
+
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-6 py-16 text-center text-on-surface-variant/40 text-sm">
+              <span class="material-symbols-outlined text-4xl block mb-2">folder_off</span>
+              Aucun dossier médical trouvé
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="flex items-center justify-center gap-2">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-sm">
+      <span class="material-symbols-outlined text-base">chevron_left</span>
+    </a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    <a href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}" class="px-4 py-2 rounded-xl text-sm {% if page_obj.number == num %}bg-primary-container text-on-primary-container{% else %}bg-surface-container text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+      {{ num }}
+    </a>
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="px-4 py-2 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high text-sm">
+      <span class="material-symbols-outlined text-base">chevron_right</span>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

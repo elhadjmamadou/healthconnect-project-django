@@ -53,13 +53,30 @@
           </span>
         </div>
       </div>
-      {% if request.user.is_patient %}
-      <a href="{% url 'rendez_vous:reserver' %}"
-        class="flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-headline font-semibold glow-button whitespace-nowrap self-start">
-        <span class="material-symbols-outlined text-base">event</span>
-        Prendre RDV
-      </a>
-      {% endif %}
+      <div class="flex flex-col gap-2 self-start">
+        {% if request.user.is_patient %}
+        <a href="{% url 'rendez_vous:reserver' %}"
+          class="flex items-center gap-2 bg-primary-container text-on-primary-container rounded-xl px-5 py-3 text-sm font-headline font-semibold glow-button whitespace-nowrap">
+          <span class="material-symbols-outlined text-base">event</span>
+          Prendre RDV
+        </a>
+        {% endif %}
+        {% if request.user.is_admin_role or request.user.is_staff %}
+        <a href="{% url 'medecins:modifier' medecin.pk %}"
+          class="flex items-center gap-2 bg-surface-container text-on-surface rounded-xl px-5 py-2.5 text-sm hover:bg-surface-container-high transition-colors whitespace-nowrap">
+          <span class="material-symbols-outlined text-base">edit</span>
+          Modifier
+        </a>
+        <form method="post" action="{% url 'medecins:supprimer' medecin.pk %}"
+          onsubmit="return confirm('Supprimer définitivement ce médecin ?')">
+          {% csrf_token %}
+          <button type="submit" class="w-full flex items-center gap-2 text-error/70 hover:text-error text-sm px-5 py-2.5 rounded-xl hover:bg-error/10 transition-colors">
+            <span class="material-symbols-outlined text-base">delete</span>
+            Supprimer
+          </button>
+        </form>
+        {% endif %}
+      </div>
     </div>
   </div>
 

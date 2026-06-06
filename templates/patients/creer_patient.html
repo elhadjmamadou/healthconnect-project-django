@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Créer un patient{% endblock %}
+{% block page_title %}Nouveau Patient{% endblock %}
+{% block page_subtitle %}Créer un compte patient{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-sm text-on-surface-variant">
+    <a href="{% url 'patients:liste' %}" class="hover:text-on-surface transition-colors">Patients</a>
+    <span class="material-symbols-outlined text-base">chevron_right</span>
+    <span class="text-on-surface">Nouveau patient</span>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Informations du compte -->
+    <div class="bg-surface-container rounded-2xl p-6 mb-4">
+      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-xl">account_circle</span>
+        Informations du compte
+      </h3>
+
+      {% if user_form.non_field_errors %}
+      <div class="alert-error rounded-xl px-4 py-3 mb-4 text-sm">{{ user_form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Prénom *</label>
+          {{ user_form.first_name }}
+          {% if user_form.first_name.errors %}<p class="text-error text-xs mt-1">{{ user_form.first_name.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Nom *</label>
+          {{ user_form.last_name }}
+          {% if user_form.last_name.errors %}<p class="text-error text-xs mt-1">{{ user_form.last_name.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Email *</label>
+          {{ user_form.email }}
+          {% if user_form.email.errors %}<p class="text-error text-xs mt-1">{{ user_form.email.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Téléphone</label>
+          {{ user_form.telephone }}
+          {% if user_form.telephone.errors %}<p class="text-error text-xs mt-1">{{ user_form.telephone.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Mot de passe *</label>
+          {{ user_form.password1 }}
+          {% if user_form.password1.errors %}<p class="text-error text-xs mt-1">{{ user_form.password1.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Confirmer le mot de passe *</label>
+          {{ user_form.password2 }}
+          {% if user_form.password2.errors %}<p class="text-error text-xs mt-1">{{ user_form.password2.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Profil médical -->
+    <div class="bg-surface-container rounded-2xl p-6 mb-6">
+      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-xl">medical_information</span>
+        Profil médical
+      </h3>
+
+      {% if profile_form.non_field_errors %}
+      <div class="alert-error rounded-xl px-4 py-3 mb-4 text-sm">{{ profile_form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Date de naissance</label>
+          {{ profile_form.date_naissance }}
+          {% if profile_form.date_naissance.errors %}<p class="text-error text-xs mt-1">{{ profile_form.date_naissance.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Sexe</label>
+          {{ profile_form.sexe }}
+          {% if profile_form.sexe.errors %}<p class="text-error text-xs mt-1">{{ profile_form.sexe.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Groupe sanguin</label>
+          {{ profile_form.groupe_sanguin }}
+          {% if profile_form.groupe_sanguin.errors %}<p class="text-error text-xs mt-1">{{ profile_form.groupe_sanguin.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Adresse</label>
+          {{ profile_form.adresse }}
+          {% if profile_form.adresse.errors %}<p class="text-error text-xs mt-1">{{ profile_form.adresse.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Allergies connues</label>
+          {{ profile_form.allergies }}
+          {% if profile_form.allergies.errors %}<p class="text-error text-xs mt-1">{{ profile_form.allergies.errors.0 }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Antécédents médicaux</label>
+          {{ profile_form.antecedents_resumes }}
+          {% if profile_form.antecedents_resumes.errors %}<p class="text-error text-xs mt-1">{{ profile_form.antecedents_resumes.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" class="glow-btn rounded-xl px-6 py-3 text-sm font-headline font-semibold flex items-center gap-2">
+        <span class="material-symbols-outlined text-base">person_add</span>
+        Créer le patient
+      </button>
+      <a href="{% url 'patients:liste' %}" class="bg-surface-container text-on-surface-variant rounded-xl px-6 py-3 text-sm hover:bg-surface-container-high transition-colors">
+        Annuler
+      </a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

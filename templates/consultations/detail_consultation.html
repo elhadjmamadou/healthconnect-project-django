@@ -68,13 +68,26 @@
             <span class="chip-base chip-success text-xs">{{ dossier.get_statut_dossier_display }}</span>
           </div>
         </div>
-        {% if can_edit %}
-        <a href="{% url 'consultations:editer' consultation.pk %}"
-          class="inline-flex items-center gap-2 bg-primary text-on-primary text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition">
-          <span class="material-symbols-outlined text-base">edit</span>
-          Modifier
-        </a>
-        {% endif %}
+        <div class="flex gap-2">
+          {% if can_edit %}
+          <a href="{% url 'consultations:editer' consultation.pk %}"
+            class="inline-flex items-center gap-2 bg-primary text-on-primary text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition">
+            <span class="material-symbols-outlined text-base">edit</span>
+            Modifier
+          </a>
+          {% endif %}
+          {% if can_edit or request.user.is_admin_role or request.user.is_staff %}
+          <form method="post" action="{% url 'consultations:supprimer' consultation.pk %}"
+            onsubmit="return confirm('Supprimer définitivement cette consultation ?')">
+            {% csrf_token %}
+            <button type="submit"
+              class="inline-flex items-center gap-2 text-error/70 hover:text-error text-sm font-semibold px-4 py-2 rounded-lg hover:bg-error/10 transition">
+              <span class="material-symbols-outlined text-base">delete</span>
+              Supprimer
+            </button>
+          </form>
+          {% endif %}
+        </div>
       </div>
     </div>
 
