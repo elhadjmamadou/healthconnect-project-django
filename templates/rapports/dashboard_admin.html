@@ -9,102 +9,264 @@
 <div class="space-y-6">
 
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in-up">
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 observe-animate">
     <div>
-      <h2 class="font-headline font-bold text-3xl text-on-surface tracking-tight">Centre de Commande</h2>
-      <p class="text-on-surface-variant text-sm mt-1 opacity-70">Vue d'ensemble de la plateforme HealthConnect</p>
+      <p class="text-[11px] uppercase tracking-widest text-primary/50 mb-1.5">{% now "l j F Y" %}</p>
+      <h2 class="font-headline font-extrabold text-3xl text-on-surface tracking-tight">
+        Centre de <span class="text-gradient-cyan">Commande</span>
+      </h2>
+      <p class="text-on-surface-variant text-sm mt-1.5 opacity-70">Le pouls de HealthConnect, en temps réel.</p>
     </div>
-    <div class="flex items-center gap-2 bg-secondary/8 border border-secondary/20 rounded-full px-4 py-2">
-      <span class="status-dot status-dot-live"></span>
-      <span class="text-secondary text-xs font-semibold tracking-wide">Système opérationnel</span>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-secondary/8 border border-secondary/20 rounded-full px-4 py-2">
+        <span class="status-dot status-dot-live"></span>
+        <span class="text-secondary text-xs font-semibold tracking-wide">Système opérationnel</span>
+      </div>
+      <a href="{% url 'rapports:generer' %}" class="glow-btn hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-headline font-semibold">
+        <span class="material-symbols-outlined text-base">summarize</span>
+        Générer un rapport
+      </a>
     </div>
   </div>
 
   <!-- KPI Cards -->
   <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 stagger">
 
-    <div class="kpi-card kpi-card-primary glass-card-cyan rounded-2xl p-5">
-      <div class="flex items-start justify-between mb-5">
+    <!-- Patients -->
+    <div class="kpi-card glass-card-cyan rounded-2xl p-5">
+      <div class="flex items-start justify-between mb-4 relative z-10">
         <div class="w-10 h-10 rounded-xl bg-primary-container/15 flex items-center justify-center">
           <span class="material-symbols-outlined text-primary text-xl icon-filled">group</span>
         </div>
-        <span class="chip-base chip-success text-[10px]">+{{ stats.patients_new_month|default:'0' }} mois</span>
+        <span class="chip-base chip-success text-[10px]">
+          <span class="material-symbols-outlined text-xs">trending_up</span>
+          +{{ stats.patients_new_month|default:'0' }} ce mois
+        </span>
       </div>
-      <div class="kpi-number text-3xl kpi-number-gradient kpi-count" data-count="{{ stats.total_patients|default:0 }}">{{ stats.total_patients|default:'0' }}</div>
-      <div class="text-on-surface-variant text-xs mt-1.5 font-medium">Total Patients</div>
+      <div class="kpi-number text-3xl kpi-number-gradient kpi-count relative z-10" data-count="{{ stats.total_patients|default:0 }}">{{ stats.total_patients|default:'0' }}</div>
+      <div class="text-on-surface-variant text-xs mt-1.5 font-medium relative z-10">Patients inscrits</div>
+      <div class="h-9 mt-3 -mx-1 relative z-10"><canvas id="sparkPatients"></canvas></div>
     </div>
 
-    <div class="kpi-card kpi-card-secondary glass-card-green rounded-2xl p-5">
-      <div class="flex items-start justify-between mb-5">
+    <!-- Médecins -->
+    <div class="kpi-card glass-card-green rounded-2xl p-5">
+      <div class="flex items-start justify-between mb-4 relative z-10">
         <div class="w-10 h-10 rounded-xl bg-secondary/15 flex items-center justify-center">
           <span class="material-symbols-outlined text-secondary text-xl icon-filled">medical_services</span>
         </div>
+        {% if stats.medecins_new_month %}
+        <span class="chip-base chip-success text-[10px]">+{{ stats.medecins_new_month }} ce mois</span>
+        {% else %}
         <span class="chip-base chip-info text-[10px]">Actifs</span>
+        {% endif %}
       </div>
-      <div class="kpi-number text-3xl kpi-number-green kpi-count" data-count="{{ stats.total_medecins|default:0 }}">{{ stats.total_medecins|default:'0' }}</div>
-      <div class="text-on-surface-variant text-xs mt-1.5 font-medium">Total Médecins</div>
+      <div class="kpi-number text-3xl kpi-number-green kpi-count relative z-10" data-count="{{ stats.total_medecins|default:0 }}">{{ stats.total_medecins|default:'0' }}</div>
+      <div class="text-on-surface-variant text-xs mt-1.5 font-medium relative z-10">Médecins partenaires</div>
+      <div class="h-9 mt-3 flex items-end gap-1 relative z-10" aria-hidden="true">
+        {% for m in top_medecins %}
+        <div class="flex-1 rounded-t bg-secondary/25" style="height: {{ m.pct }}%"></div>
+        {% endfor %}
+      </div>
     </div>
 
-    <div class="kpi-card kpi-card-tertiary glass-card-purple rounded-2xl p-5">
-      <div class="flex items-start justify-between mb-5">
+    <!-- RDV aujourd'hui -->
+    <div class="kpi-card glass-card-purple rounded-2xl p-5">
+      <div class="flex items-start justify-between mb-4 relative z-10">
         <div class="w-10 h-10 rounded-xl bg-tertiary/15 flex items-center justify-center">
           <span class="material-symbols-outlined text-tertiary text-xl icon-filled">calendar_today</span>
         </div>
-        <span class="chip-base chip-tertiary text-[10px]">Aujourd'hui</span>
+        {% if stats.rdv_delta_hier > 0 %}
+        <span class="chip-base chip-success text-[10px]">+{{ stats.rdv_delta_hier }} vs hier</span>
+        {% elif stats.rdv_delta_hier < 0 %}
+        <span class="chip-base chip-error text-[10px]">{{ stats.rdv_delta_hier }} vs hier</span>
+        {% else %}
+        <span class="chip-base chip-tertiary text-[10px]">= hier</span>
+        {% endif %}
       </div>
-      <div class="kpi-number text-3xl kpi-number-purple kpi-count" data-count="{{ stats.rdv_today|default:0 }}">{{ stats.rdv_today|default:'0' }}</div>
-      <div class="text-on-surface-variant text-xs mt-1.5 font-medium">Rendez-vous</div>
+      <div class="kpi-number text-3xl kpi-number-purple kpi-count relative z-10" data-count="{{ stats.rdv_today|default:0 }}">{{ stats.rdv_today|default:'0' }}</div>
+      <div class="text-on-surface-variant text-xs mt-1.5 font-medium relative z-10">Rendez-vous aujourd'hui</div>
+      <div class="h-9 mt-3 -mx-1 relative z-10"><canvas id="sparkRdv"></canvas></div>
     </div>
 
-    <div class="kpi-card kpi-card-primary glass-card-cyan rounded-2xl p-5">
-      <div class="flex items-start justify-between mb-5">
+    <!-- Revenus -->
+    <div class="kpi-card glass-card-cyan rounded-2xl p-5">
+      <div class="flex items-start justify-between mb-4 relative z-10">
         <div class="w-10 h-10 rounded-xl bg-primary-container/15 flex items-center justify-center">
           <span class="material-symbols-outlined text-primary-container text-xl icon-filled">payments</span>
         </div>
+        {% if stats.revenus_delta is not None %}
+          {% if stats.revenus_delta >= 0 %}
+          <span class="chip-base chip-success text-[10px]">
+            <span class="material-symbols-outlined text-xs">trending_up</span>
+            +{{ stats.revenus_delta }}%
+          </span>
+          {% else %}
+          <span class="chip-base chip-error text-[10px]">
+            <span class="material-symbols-outlined text-xs">trending_down</span>
+            {{ stats.revenus_delta }}%
+          </span>
+          {% endif %}
+        {% else %}
         <span class="chip-base chip-warning text-[10px]">Ce mois</span>
+        {% endif %}
       </div>
-      <div class="kpi-number text-2xl text-gradient-cyan">{{ stats.revenus_mois|default:'0' }}</div>
-      <div class="text-on-surface-variant text-xs mt-1.5 font-medium">Revenus GNF</div>
+      <div class="kpi-number text-2xl text-gradient-cyan relative z-10">{{ stats.revenus_mois|default:'0' }}</div>
+      <div class="text-on-surface-variant text-xs mt-1.5 font-medium relative z-10">Revenus du mois (GNF)</div>
+      <div class="h-9 mt-3 -mx-1 relative z-10"><canvas id="sparkRevenus"></canvas></div>
     </div>
   </div>
 
-  <!-- Charts row -->
-  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+  <!-- Pouls de la plateforme + Statuts -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-    <!-- Chart RDV -->
-    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
-      <div class="flex items-center justify-between mb-5">
+    <!-- Combo chart RDV + revenus -->
+    <div class="xl:col-span-2 bg-surface-container rounded-2xl p-6 observe-animate">
+      <div class="flex items-center justify-between mb-1">
         <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
           <span class="material-symbols-outlined text-primary text-xl icon-filled">monitoring</span>
-          Activité Rendez-vous
+          Pouls de la plateforme
         </h3>
         <span class="text-xs text-on-surface-variant/50">30 derniers jours</span>
       </div>
-      <div class="relative h-52">
-        <canvas id="rdvChart"></canvas>
+      <div class="flex items-center gap-5 mb-4 text-[11px] text-on-surface-variant/70">
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-primary-container/70"></span>Rendez-vous</span>
+        <span class="flex items-center gap-1.5"><span class="w-2.5 h-0.5 rounded bg-secondary"></span>Revenus (GNF)</span>
+      </div>
+      <div class="relative h-64">
+        <canvas id="activiteChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Doughnut statuts RDV -->
+    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary text-xl icon-filled">donut_small</span>
+          Statuts des RDV
+        </h3>
+        <span class="text-xs text-on-surface-variant/50">30 jours</span>
+      </div>
+      <div class="relative h-64">
+        <canvas id="statutsChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Croissance + Spécialités + Activité -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Croissance patients -->
+    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-xl icon-filled">person_add</span>
+          Nouveaux patients
+        </h3>
+        <span class="text-xs text-on-surface-variant/50">6 mois</span>
+      </div>
+      <div class="relative h-48">
+        <canvas id="patientsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Répartition spécialités -->
+    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-tertiary text-xl icon-filled">stethoscope</span>
+          Spécialités
+        </h3>
+        <a href="{% url 'medecins:specialites' %}" class="text-xs text-primary hover:text-primary-container transition-colors font-medium hover-link">Gérer</a>
+      </div>
+      <div class="relative h-48">
+        <canvas id="specialitesChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Activité récente -->
+    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined text-error text-xl icon-filled">notifications_active</span>
+        Activité récente
+      </h3>
+      <div class="space-y-3 relative">
+        <div class="timeline-line left-[13px]"></div>
+        {% for notif in notifications_recentes %}
+        <div class="flex items-start gap-3 relative">
+          <div class="w-7 h-7 rounded-full bg-surface-container-highest border border-outline-variant/20 flex items-center justify-center flex-shrink-0 mt-0.5 relative z-10">
+            <span class="material-symbols-outlined text-xs text-primary">notifications</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs text-on-surface leading-snug">{{ notif.contenu_resume|truncatechars:55 }}</div>
+            <div class="text-[10px] text-on-surface-variant/50 mt-1">Il y a {{ notif.date_envoi|timesince }}</div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-6 text-on-surface-variant/30">
+          <span class="material-symbols-outlined text-3xl block mb-1">notifications_off</span>
+          <p class="text-xs">Aucune activité</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Top médecins + RDV récents -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Top médecins -->
+    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-xl icon-filled">workspace_premium</span>
+        Top médecins
+      </h3>
+      <div class="space-y-4">
+        {% for medecin in top_medecins %}
+        <div>
+          <div class="flex items-center gap-3 mb-1.5">
+            <div class="w-8 h-8 rounded-full bg-primary-container/15 flex items-center justify-center text-primary font-semibold text-[11px] flex-shrink-0">
+              {{ medecin.user.first_name|first }}{{ medecin.user.last_name|first }}
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium text-on-surface truncate">Dr {{ medecin.nom_complet }}</div>
+              <div class="text-[11px] text-on-surface-variant/60 truncate">{{ medecin.specialites.all|join:", "|default:"—" }}</div>
+            </div>
+            <span class="text-xs text-secondary font-semibold flex-shrink-0">{{ medecin.nb_rdv|default:0 }} RDV</span>
+          </div>
+          <div class="progress-bar ml-11">
+            <div class="progress-fill" style="width: {{ medecin.pct|default:0 }}%"></div>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-on-surface-variant/30 text-sm text-center py-6">Aucun médecin</p>
+        {% endfor %}
       </div>
     </div>
 
     <!-- RDV récents -->
-    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
+    <div class="lg:col-span-2 bg-surface-container rounded-2xl p-6 observe-animate">
       <div class="flex items-center justify-between mb-5">
         <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
           <span class="material-symbols-outlined text-secondary text-xl icon-filled">event</span>
-          Rendez-vous Récents
+          Rendez-vous récents
         </h3>
         <a href="{% url 'rendez_vous:liste' %}" class="text-xs text-primary hover:text-primary-container transition-colors font-medium hover-link">Voir tout</a>
       </div>
-      <div class="space-y-2">
+      <div class="divide-y divide-outline-variant/10">
         {% for rdv in rdv_recents %}
-        <div class="flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-surface-container-high transition-colors cursor-default">
+        <div class="flex items-center gap-3 py-3 hover:bg-surface-container-high rounded-xl px-3 -mx-3 transition-colors">
           <div class="w-9 h-9 rounded-full bg-primary-container/15 flex items-center justify-center text-primary font-semibold text-xs flex-shrink-0">
             {{ rdv.patient.user.first_name|first }}{{ rdv.patient.user.last_name|first }}
           </div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-on-surface truncate">{{ rdv.patient.nom_complet }}</div>
-            <div class="text-xs text-on-surface-variant/60 truncate">Dr. {{ rdv.medecin.nom_complet }} — {{ rdv.heure_debut|time:"H:i" }}</div>
+            <div class="text-xs text-on-surface-variant/60 truncate">Dr {{ rdv.medecin.nom_complet }}</div>
           </div>
-          <span class="chip-base flex-shrink-0
+          <div class="hidden sm:block text-right flex-shrink-0">
+            <div class="text-xs text-on-surface">{{ rdv.date_rdv|date:"d M Y" }}</div>
+            <div class="text-[11px] text-on-surface-variant/50">{{ rdv.heure_debut|time:"H:i" }} — {{ rdv.heure_fin|time:"H:i" }}</div>
+          </div>
+          <span class="chip-base flex-shrink-0 text-[11px]
             {% if rdv.statut_rdv == 'confirme' %}chip-success
             {% elif rdv.statut_rdv == 'en_attente' %}chip-warning
             {% elif rdv.statut_rdv == 'termine' %}chip-info
@@ -121,153 +283,230 @@
       </div>
     </div>
   </div>
-
-  <!-- Bottom grid -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-    <!-- Top médecins -->
-    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
-      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
-        <span class="material-symbols-outlined text-primary text-xl icon-filled">workspace_premium</span>
-        Médecins Actifs
-      </h3>
-      <div class="space-y-4">
-        {% for medecin in top_medecins %}
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <div class="min-w-0 flex-1">
-              <div class="text-sm font-medium text-on-surface truncate">Dr. {{ medecin.nom_complet }}</div>
-              <div class="text-xs text-on-surface-variant/60">{{ medecin.specialites_list|join:", "|default:"—" }}</div>
-            </div>
-            <span class="text-xs text-secondary font-semibold ml-3 flex-shrink-0">{{ medecin.nb_rdv|default:0 }} RDV</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: {{ medecin.pct|default:0 }}%"></div>
-          </div>
-        </div>
-        {% empty %}
-        <p class="text-on-surface-variant/30 text-sm text-center py-6">Aucun médecin</p>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Doughnut spécialités -->
-    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
-      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
-        <span class="material-symbols-outlined text-tertiary text-xl icon-filled">pie_chart</span>
-        Répartition Spécialités
-      </h3>
-      <div class="relative h-44">
-        <canvas id="specialitesChart"></canvas>
-      </div>
-    </div>
-
-    <!-- Notifications système -->
-    <div class="bg-surface-container rounded-2xl p-6 observe-animate">
-      <h3 class="font-headline font-semibold text-on-surface mb-5 flex items-center gap-2">
-        <span class="material-symbols-outlined text-error text-xl icon-filled">notifications_active</span>
-        Activité Récente
-      </h3>
-      <div class="space-y-3">
-        {% for notif in notifications_recentes %}
-        <div class="flex items-start gap-3">
-          <div class="w-7 h-7 rounded-xl bg-surface-container-highest flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span class="material-symbols-outlined text-xs text-primary">notifications</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="text-xs text-on-surface leading-snug">{{ notif.contenu_resume|truncatechars:55 }}</div>
-            <div class="text-[10px] text-on-surface-variant/50 mt-1">{{ notif.date_envoi|timesince }}</div>
-          </div>
-        </div>
-        {% empty %}
-        <div class="text-center py-6 text-on-surface-variant/30">
-          <span class="material-symbols-outlined text-3xl block mb-1">notifications_off</span>
-          <p class="text-xs">Aucune activité</p>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-{{ rdv_chart_data|json_script:"rdv-data" }}
+{{ activite_chart_data|json_script:"activite-data" }}
+{{ statuts_chart_data|json_script:"statuts-data" }}
+{{ patients_chart_data|json_script:"patients-data" }}
 {{ specialites_chart_data|json_script:"specialites-data" }}
 <script>
-const rdvData = JSON.parse(document.getElementById('rdv-data').textContent);
+const activiteData = JSON.parse(document.getElementById('activite-data').textContent);
+const statutsData = JSON.parse(document.getElementById('statuts-data').textContent);
+const patientsData = JSON.parse(document.getElementById('patients-data').textContent);
 const specialitesData = JSON.parse(document.getElementById('specialites-data').textContent);
 
 Chart.defaults.color = 'rgba(187,201,205,0.6)';
 Chart.defaults.borderColor = 'rgba(60,73,76,0.15)';
+Chart.defaults.font.family = "'Inter', sans-serif";
 
-// Graphique RDV
-new Chart(document.getElementById('rdvChart').getContext('2d'), {
-  type: 'line',
+const tooltipDark = {
+  backgroundColor: 'rgba(20,20,24,0.95)',
+  borderColor: 'rgba(34,211,238,0.25)',
+  borderWidth: 1,
+  titleColor: '#8aebff',
+  bodyColor: '#e4e1e7',
+  padding: 12,
+  cornerRadius: 12,
+  titleFont: { family: "'Manrope', sans-serif", weight: '700' },
+};
+
+function gradient(ctx, height, rgb, alpha) {
+  const g = ctx.createLinearGradient(0, 0, 0, height);
+  g.addColorStop(0, `rgba(${rgb},${alpha})`);
+  g.addColorStop(1, `rgba(${rgb},0)`);
+  return g;
+}
+
+/* ── Pouls de la plateforme : barres RDV + courbe revenus ── */
+new Chart(document.getElementById('activiteChart').getContext('2d'), {
   data: {
-    labels: rdvData.labels,
-    datasets: [{
-      label: 'Rendez-vous',
-      data: rdvData.values,
-      borderColor: '#22d3ee',
-      backgroundColor: (ctx) => {
-        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 220);
-        g.addColorStop(0, 'rgba(34,211,238,0.18)');
-        g.addColorStop(1, 'rgba(34,211,238,0)');
-        return g;
+    labels: activiteData.labels,
+    datasets: [
+      {
+        type: 'line',
+        label: 'Revenus',
+        data: activiteData.revenus,
+        yAxisID: 'yRevenus',
+        borderColor: '#4edea3',
+        backgroundColor: (c) => gradient(c.chart.ctx, 260, '78,222,163', 0.10),
+        fill: true,
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#4edea3',
+        pointBorderColor: '#0e0e12',
       },
-      fill: true, tension: 0.45, borderWidth: 2.5,
-      pointBackgroundColor: '#22d3ee',
-      pointBorderColor: '#0e0e12',
-      pointBorderWidth: 2,
-      pointRadius: 4,
-      pointHoverRadius: 6,
-    }]
+      {
+        type: 'bar',
+        label: 'Rendez-vous',
+        data: activiteData.rdv,
+        yAxisID: 'yRdv',
+        backgroundColor: (c) => gradient(c.chart.ctx, 260, '34,211,238', 0.65),
+        hoverBackgroundColor: '#8aebff',
+        borderRadius: 5,
+        borderSkipped: false,
+        maxBarThickness: 14,
+      },
+    ]
   },
   options: {
     responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: {
-      backgroundColor: 'rgba(30,30,35,0.9)',
-      borderColor: 'rgba(34,211,238,0.2)',
-      borderWidth: 1,
-      titleColor: '#8aebff',
-      bodyColor: '#e4e1e7',
-      padding: 10,
-      cornerRadius: 10,
-    }},
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: { ...tooltipDark, callbacks: {
+        label: (item) => item.dataset.label === 'Revenus'
+          ? ` Revenus : ${item.parsed.y.toLocaleString('fr-FR')} GNF`
+          : ` Rendez-vous : ${item.parsed.y}`,
+      }},
+    },
     scales: {
-      x: { grid: { color: 'rgba(60,73,76,0.12)' }, ticks: { font: { size: 10 } } },
-      y: { grid: { color: 'rgba(60,73,76,0.12)' }, beginAtZero: true, ticks: { font: { size: 10 } } }
+      x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 10 } },
+      yRdv: {
+        position: 'left', beginAtZero: true,
+        grid: { color: 'rgba(60,73,76,0.12)' },
+        ticks: { font: { size: 10 }, precision: 0 },
+      },
+      yRevenus: {
+        position: 'right', beginAtZero: true,
+        grid: { drawOnChartArea: false },
+        ticks: { font: { size: 10 }, callback: (v) => v >= 1000000 ? (v/1000000) + ' M' : v >= 1000 ? (v/1000) + ' k' : v },
+      },
     }
   }
 });
 
-// Doughnut spécialités
-new Chart(document.getElementById('specialitesChart').getContext('2d'), {
+/* ── Doughnut statuts avec total au centre ── */
+const totalStatuts = statutsData.values.reduce((a, b) => a + b, 0);
+new Chart(document.getElementById('statutsChart').getContext('2d'), {
   type: 'doughnut',
+  data: {
+    labels: statutsData.labels,
+    datasets: [{
+      data: statutsData.values,
+      backgroundColor: ['#4edea3', '#8aebff', '#8ab4f8', '#ffb4ab', '#fbbf24'],
+      borderColor: '#1a1a1e',
+      borderWidth: 3,
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '72%',
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 9, boxHeight: 9, padding: 12, font: { size: 10 }, usePointStyle: true, pointStyle: 'circle' } },
+      tooltip: tooltipDark,
+    },
+  },
+  plugins: [{
+    id: 'centerText',
+    afterDraw(chart) {
+      const { ctx, chartArea } = chart;
+      const x = (chartArea.left + chartArea.right) / 2;
+      const y = (chartArea.top + chartArea.bottom) / 2;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.font = "800 26px 'Manrope', sans-serif";
+      ctx.fillStyle = '#e6e3e9';
+      ctx.fillText(totalStatuts.toLocaleString('fr-FR'), x, y - 2);
+      ctx.font = "500 10px 'Inter', sans-serif";
+      ctx.fillStyle = 'rgba(187,201,205,0.55)';
+      ctx.fillText('RDV / 30 jours', x, y + 16);
+      ctx.restore();
+    }
+  }]
+});
+
+/* ── Nouveaux patients (6 mois) ── */
+new Chart(document.getElementById('patientsChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: patientsData.labels,
+    datasets: [{
+      data: patientsData.values,
+      backgroundColor: (c) => gradient(c.chart.ctx, 200, '138,235,255', 0.7),
+      hoverBackgroundColor: '#8aebff',
+      borderRadius: 7,
+      borderSkipped: false,
+      maxBarThickness: 34,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { ...tooltipDark, callbacks: {
+      label: (item) => ` ${item.parsed.y} nouveau${item.parsed.y > 1 ? 'x' : ''} patient${item.parsed.y > 1 ? 's' : ''}`,
+    }}},
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+      y: { beginAtZero: true, grid: { color: 'rgba(60,73,76,0.12)' }, ticks: { font: { size: 10 }, precision: 0 } },
+    }
+  }
+});
+
+/* ── Spécialités (polar) ── */
+new Chart(document.getElementById('specialitesChart').getContext('2d'), {
+  type: 'polarArea',
   data: {
     labels: specialitesData.labels,
     datasets: [{
       data: specialitesData.values,
-      backgroundColor: ['#22d3ee','#4edea3','#cbb5ff','#ffb4ab','#8aebff','#fbbf24'],
+      backgroundColor: [
+        'rgba(34,211,238,0.55)',
+        'rgba(78,222,163,0.55)',
+        'rgba(203,181,255,0.55)',
+        'rgba(255,180,171,0.55)',
+        'rgba(138,180,248,0.55)',
+        'rgba(251,191,36,0.55)',
+      ],
       borderColor: '#1a1a1e',
-      borderWidth: 3,
-      hoverOffset: 6,
+      borderWidth: 2,
     }]
   },
   options: {
     responsive: true, maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 10 } } },
-      tooltip: {
-        backgroundColor: 'rgba(30,30,35,0.9)',
-        borderColor: 'rgba(34,211,238,0.2)',
-        borderWidth: 1,
-        cornerRadius: 10,
-      }
+      legend: { position: 'right', labels: { boxWidth: 9, boxHeight: 9, padding: 8, font: { size: 10 }, usePointStyle: true, pointStyle: 'circle' } },
+      tooltip: tooltipDark,
     },
-    cutout: '68%',
+    scales: { r: {
+      grid: { color: 'rgba(60,73,76,0.15)' },
+      ticks: { display: false },
+      angleLines: { color: 'rgba(60,73,76,0.15)' },
+    }},
   }
 });
+
+/* ── Sparklines des cartes KPI ── */
+function sparkline(id, values, rgbLine) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  new Chart(el.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: values.map(() => ''),
+      datasets: [{
+        data: values,
+        borderColor: `rgb(${rgbLine})`,
+        backgroundColor: (c) => gradient(c.chart.ctx, 40, rgbLine, 0.25),
+        fill: true,
+        tension: 0.45,
+        borderWidth: 1.5,
+        pointRadius: 0,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: { x: { display: false }, y: { display: false } },
+      animation: { duration: 1400, easing: 'easeOutQuart' },
+    }
+  });
+}
+sparkline('sparkPatients', patientsData.values, '138,235,255');
+sparkline('sparkRdv', activiteData.rdv.slice(-14), '203,181,255');
+sparkline('sparkRevenus', activiteData.revenus.slice(-14), '34,211,238');
 </script>
 {% endblock %}

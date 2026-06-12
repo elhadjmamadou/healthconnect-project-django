@@ -53,13 +53,34 @@ class ModifierMedecinUserForm(forms.ModelForm):
 
 
 class SpecialiteForm(forms.ModelForm):
+
+    INPUT_CLASSES = (
+        'w-full bg-background border border-outline-variant/50 rounded-xl '
+        'px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/40'
+    )
+
     class Meta:
         model = Specialite
         fields = ('libelle', 'description', 'icone')
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 3}),
+            'libelle': forms.TextInput(attrs={
+                'placeholder': 'Ex : Cardiologie',
+            }),
+            'icone': forms.TextInput(attrs={
+                'placeholder': 'Ex : stethoscope',
+            }),
+            'description': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': 'Brève description de la spécialité…',
+            }),
         }
         labels = {
             'libelle': 'Libellé',
             'icone': 'Icône (ex: stethoscope)',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = self.INPUT_CLASSES
+        self.fields['description'].widget.attrs['class'] += ' resize-y'

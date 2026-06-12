@@ -29,18 +29,38 @@ class DashboardAdminView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     def test_func(self):
         return self.request.user.is_staff or self.request.user.is_admin_role
 
+    MOIS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
+               'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
+
     def get_context_data(self, **kwargs):
+        from django.db.models.functions import TruncDate, TruncMonth
+
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
         debut_mois = today.replace(day=1)
+        debut_mois_prec = (debut_mois - timedelta(days=1)).replace(day=1)
+        il_y_a_30j = today - timedelta(days=29)
 
-        revenus_mois = (
-            Paiement.objects.filter(
-                statut_paiement=Paiement.StatutPaiement.CONFIRME,
-                date_paiement__date__gte=debut_mois,
-            ).aggregate(total=Sum("montant"))["total"]
-            or 0
+        paiements_confirmes = Paiement.objects.filter(
+            statut_paiement=Paiement.StatutPaiement.CONFIRME
         )
+        revenus_mois = (
+            paiements_confirmes.filter(date_paiement__date__gte=debut_mois)
+            .aggregate(total=Sum("montant"))["total"] or 0
+        )
+        revenus_mois_prec = (
+            paiements_confirmes.filter(
+                date_paiement__date__gte=debut_mois_prec,
+                date_paiement__date__lt=debut_mois,
+            ).aggregate(total=Sum("montant"))["total"] or 0
+        )
+        if revenus_mois_prec:
+            revenus_delta = round((revenus_mois - revenus_mois_prec) / revenus_mois_prec * 100)
+        else:
+            revenus_delta = None
+
+        rdv_today = RendezVous.objects.filter(date_rdv=today).count()
+        rdv_hier = RendezVous.objects.filter(date_rdv=today - timedelta(days=1)).count()
 
         context["stats"] = {
             "total_patients": Patient.objects.count(),
@@ -48,8 +68,13 @@ class DashboardAdminView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 date_creation__date__gte=debut_mois
             ).count(),
             "total_medecins": Medecin.objects.count(),
-            "rdv_today": RendezVous.objects.filter(date_rdv=today).count(),
-            "revenus_mois": f"{revenus_mois:,.0f}",
+            "medecins_new_month": Medecin.objects.filter(
+                date_creation__date__gte=debut_mois
+            ).count(),
+            "rdv_today": rdv_today,
+            "rdv_delta_hier": rdv_today - rdv_hier,
+            "revenus_mois": f"{revenus_mois:,.0f}".replace(",", " "),
+            "revenus_delta": revenus_delta,
         }
 
         context["rdv_recents"] = RendezVous.objects.select_related(
@@ -57,7 +82,10 @@ class DashboardAdminView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         ).order_by("-date_creation")[:6]
 
         medecins_qs = list(
-            Medecin.objects.annotate(nb_rdv=Count("rendez_vous")).order_by("-nb_rdv")[:5]
+            Medecin.objects.select_related("user")
+            .prefetch_related("specialites")
+            .annotate(nb_rdv=Count("rendez_vous"))
+            .order_by("-nb_rdv")[:5]
         )
         max_rdv = medecins_qs[0].nb_rdv if medecins_qs else 1
         for m in medecins_qs:
@@ -68,20 +96,76 @@ class DashboardAdminView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             "utilisateur"
         ).order_by("-date_envoi")[:6]
 
-        labels, values = [], []
+        # ── Série 30 jours : RDV et revenus par jour (2 requêtes agrégées) ──
+        rdv_par_jour = dict(
+            RendezVous.objects.filter(date_rdv__gte=il_y_a_30j, date_rdv__lte=today)
+            .values_list("date_rdv")
+            .annotate(c=Count("id"))
+        )
+        revenus_par_jour = {
+            row["jour"]: float(row["total"])
+            for row in paiements_confirmes.filter(date_paiement__date__gte=il_y_a_30j)
+            .annotate(jour=TruncDate("date_paiement"))
+            .values("jour")
+            .annotate(total=Sum("montant"))
+        }
+        labels, rdv_values, revenus_values = [], [], []
         for i in range(29, -1, -1):
             day = today - timedelta(days=i)
             labels.append(day.strftime("%d/%m"))
-            values.append(RendezVous.objects.filter(date_rdv=day).count())
-        context["rdv_chart_data"] = json.dumps({"labels": labels, "values": values})
+            rdv_values.append(rdv_par_jour.get(day, 0))
+            revenus_values.append(revenus_par_jour.get(day, 0))
+        context["activite_chart_data"] = {
+            "labels": labels,
+            "rdv": rdv_values,
+            "revenus": revenus_values,
+        }
+
+        # ── Statuts des RDV sur 30 jours ──
+        statuts = dict(
+            RendezVous.objects.filter(date_rdv__gte=il_y_a_30j)
+            .values_list("statut_rdv")
+            .annotate(c=Count("id"))
+        )
+        context["statuts_chart_data"] = {
+            "labels": ["Confirmés", "En attente", "Terminés", "Annulés", "Non présentés"],
+            "values": [
+                statuts.get("confirme", 0),
+                statuts.get("en_attente", 0),
+                statuts.get("termine", 0),
+                statuts.get("annule_patient", 0) + statuts.get("annule_medecin", 0),
+                statuts.get("no_show", 0),
+            ],
+        }
+
+        # ── Nouveaux patients par mois (6 derniers mois) ──
+        debut_periode = (debut_mois - timedelta(days=160)).replace(day=1)
+        patients_par_mois = {
+            row["mois"].date() if hasattr(row["mois"], "date") else row["mois"]: row["c"]
+            for row in Patient.objects.filter(date_creation__date__gte=debut_periode)
+            .annotate(mois=TruncMonth("date_creation"))
+            .values("mois")
+            .annotate(c=Count("id"))
+        }
+        mois_labels, mois_values = [], []
+        annee, mois = debut_periode.year, debut_periode.month
+        while (annee, mois) <= (today.year, today.month):
+            cle = today.replace(year=annee, month=mois, day=1)
+            mois_labels.append(self.MOIS_FR[mois - 1])
+            mois_values.append(patients_par_mois.get(cle, 0))
+            annee, mois = (annee + 1, 1) if mois == 12 else (annee, mois + 1)
+        context["patients_chart_data"] = {
+            "labels": mois_labels,
+            "values": mois_values,
+        }
 
         specialites = Specialite.objects.annotate(
             nb_medecins=Count("medecins")
         ).filter(nb_medecins__gt=0).order_by("-nb_medecins")[:6]
-        context["specialites_chart_data"] = json.dumps({
+        context["specialites_chart_data"] = {
             "labels": [s.libelle for s in specialites],
             "values": [s.nb_medecins for s in specialites],
-        })
+        }
 
         return context
 

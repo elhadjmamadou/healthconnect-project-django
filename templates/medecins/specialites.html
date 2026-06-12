@@ -64,7 +64,7 @@
         <div class="divide-y divide-outline-variant/10">
           {% for spec in specialites %}
           <div class="flex items-center gap-4 px-6 py-4">
-            <div class="w-10 h-10 rounded-xl bg-primary-container/10 flex items-center justify-center flex-shrink-0">
+            <div class="w-10 h-10 rounded-xl bg-primary-container/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
               <span class="material-symbols-outlined text-primary-container text-lg">
                 {% if spec.icone %}{{ spec.icone }}{% else %}medical_services{% endif %}
               </span>

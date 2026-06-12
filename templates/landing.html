@@ -1,0 +1,572 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="dark scroll-smooth" lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HealthConnect — prenez rendez-vous avec un médecin en Guinée, suivez votre dossier médical et payez par mobile money. Simple, sécurisé, accessible.">
+  <title>HealthConnect — Votre santé, connectée</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "surface": "#131317",
+          "background": "#0e0e12",
+          "surface-container": "#1a1a1e",
+          "surface-container-low": "#161619",
+          "surface-container-high": "#242428",
+          "surface-container-highest": "#2e2d32",
+          "primary": "#8aebff",
+          "primary-container": "#22d3ee",
+          "on-primary": "#00363e",
+          "secondary": "#4edea3",
+          "secondary-container": "#00a572",
+          "tertiary": "#e4d6ff",
+          "error": "#ffb4ab",
+          "on-surface": "#e6e3e9",
+          "on-surface-variant": "#bbc9cd",
+          "outline": "#859397",
+          "outline-variant": "#3c494c",
+        },
+        fontFamily: {
+          "headline": ["Manrope", "sans-serif"],
+          "body": ["Inter", "sans-serif"],
+        },
+      }
+    }
+  }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+
+  <!-- Custom CSS (design system de l'app) -->
+  <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+
+  <style>
+    /* ====== Landing page ====== */
+
+    /* Halo bioluminescent du hero */
+    .hero-glow {
+      background:
+        radial-gradient(ellipse 50% 60% at 75% 35%, rgba(34, 211, 238, 0.13), transparent 70%),
+        radial-gradient(ellipse 40% 50% at 15% 80%, rgba(78, 222, 163, 0.07), transparent 70%);
+    }
+
+    /* Tracé ECG animé */
+    .ecg-path {
+      stroke-dasharray: 1200;
+      stroke-dashoffset: 1200;
+      animation: ecg-draw 6s linear infinite;
+    }
+    @keyframes ecg-draw {
+      0%   { stroke-dashoffset: 1200; opacity: 0; }
+      8%   { opacity: 1; }
+      55%  { stroke-dashoffset: 0; opacity: 1; }
+      75%  { stroke-dashoffset: 0; opacity: 0; }
+      100% { stroke-dashoffset: 0; opacity: 0; }
+    }
+
+    /* Cartes flottantes du hero */
+    @keyframes float-soft {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+    .float-1 { animation: float-soft 7s ease-in-out infinite; }
+    .float-2 { animation: float-soft 8s ease-in-out 1.2s infinite; }
+    .float-3 { animation: float-soft 6s ease-in-out 0.6s infinite; }
+
+    /* Entrée du hero en cascade */
+    @keyframes rise-in {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .rise { opacity: 0; animation: rise-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .rise-d1 { animation-delay: 0.08s; }
+    .rise-d2 { animation-delay: 0.18s; }
+    .rise-d3 { animation-delay: 0.30s; }
+    .rise-d4 { animation-delay: 0.45s; }
+    .rise-d5 { animation-delay: 0.60s; }
+
+    /* Révélation au scroll */
+    .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Marquee spécialités */
+    .marquee-track { animation: marquee 36s linear infinite; }
+    .marquee:hover .marquee-track { animation-play-state: paused; }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* Titre dégradé */
+    .text-gradient {
+      background: linear-gradient(100deg, #8aebff 10%, #22d3ee 45%, #4edea3 90%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    /* Grain subtil */
+    .grain::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 60;
+      opacity: 0.5;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* Carte bento : liseré qui s'allume au survol */
+    .bento-card {
+      position: relative;
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+    .bento-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(34, 211, 238, 0.35);
+    }
+
+    /* Anneau en pointillés tournant lentement derrière les cartes */
+    @keyframes spin-slow { to { transform: rotate(360deg); } }
+    .ring-slow { animation: spin-slow 60s linear infinite; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ecg-path, .float-1, .float-2, .float-3, .marquee-track, .ring-slow { animation: none !important; }
+      .rise { animation-duration: 0.01s; }
+      .reveal { transition: none; opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+
+<body class="bg-background text-on-surface font-body min-h-screen grain antialiased overflow-x-hidden">
+
+  <!-- ===== Navbar publique ===== -->
+  <header id="nav" class="fixed top-0 inset-x-0 z-50 transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8">
+      <div class="flex items-center justify-between h-16 lg:h-[72px]">
+        <a href="#" class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary-container text-xl">medical_services</span>
+          </div>
+          <div>
+            <div class="font-headline font-bold text-on-surface text-lg leading-tight">HealthConnect</div>
+            <div class="text-[9px] uppercase tracking-widest text-primary/60">Le Chirurgien Numérique</div>
+          </div>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-8 text-sm text-on-surface-variant">
+          <a href="#fonctionnalites" class="hover:text-on-surface transition-colors">Fonctionnalités</a>
+          <a href="#comment" class="hover:text-on-surface transition-colors">Comment ça marche</a>
+          <a href="#specialites" class="hover:text-on-surface transition-colors">Spécialités</a>
+        </nav>
+
+        <div class="flex items-center gap-3">
+          <a href="{% url 'users:login' %}" class="hidden sm:inline-flex items-center px-5 py-2.5 rounded-xl text-sm text-on-surface-variant border border-outline-variant/40 hover:border-primary/50 hover:text-on-surface transition-colors">
+            Se connecter
+          </a>
+          <a href="{% url 'users:register' %}" class="glow-btn inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-headline font-semibold">
+            Créer un compte
+            <span class="material-symbols-outlined text-base">arrow_forward</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Hero ===== -->
+  <section class="relative hero-glow medical-pattern overflow-hidden">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 pt-32 lg:pt-44 pb-20 lg:pb-28">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-8 items-center">
+
+        <!-- Texte -->
+        <div class="lg:col-span-6 relative z-10">
+          <div class="rise rise-d1 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-secondary/25 bg-secondary/5 text-secondary text-xs font-medium mb-7">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-60"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
+            </span>
+            Plateforme de santé · Conakry, Guinée
+          </div>
+
+          <h1 class="rise rise-d2 font-headline font-extrabold tracking-tight text-[2.6rem] leading-[1.04] sm:text-6xl xl:text-[4.4rem] mb-7">
+            Votre santé,<br>
+            <span class="text-gradient">connectée.</span>
+          </h1>
+
+          <p class="rise rise-d3 text-on-surface-variant/90 text-base sm:text-lg leading-relaxed max-w-xl mb-10">
+            Trouvez un médecin, réservez votre consultation en ligne et réglez par
+            mobile money — sans file d'attente, sans paperasse. Votre dossier médical
+            vous suit, en toute sécurité.
+          </p>
+
+          <div class="rise rise-d4 flex flex-col sm:flex-row gap-4 mb-12">
+            <a href="{% url 'users:register' %}" class="glow-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-headline font-semibold">
+              <span class="material-symbols-outlined text-xl">calendar_add_on</span>
+              Prendre rendez-vous
+            </a>
+            <a href="#comment" class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:text-on-surface hover:border-primary/50 transition-colors text-sm font-medium">
+              Découvrir la plateforme
+              <span class="material-symbols-outlined text-lg">expand_more</span>
+            </a>
+          </div>
+
+          <!-- Rangée de confiance -->
+          <div class="rise rise-d5 flex flex-wrap items-center gap-x-7 gap-y-3 text-xs text-on-surface-variant/70">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-lg">verified_user</span>
+              Médecins vérifiés
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-lg">lock</span>
+              Données chiffrées
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-lg">mobile_friendly</span>
+              Orange Money · MTN · Wave
+            </div>
+          </div>
+        </div>
+
+        <!-- Composition de cartes flottantes -->
+        <div class="lg:col-span-6 relative h-[460px] sm:h-[500px] select-none" aria-hidden="true">
+          <!-- Anneau décoratif -->
+          <div class="ring-slow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full border border-dashed border-primary/10"></div>
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-primary-container/5 blur-2xl"></div>
+
+          <!-- Carte RDV (principale) -->
+          <div class="float-1 rise rise-d3 absolute top-[14%] left-1/2 -translate-x-1/2 w-[320px] sm:w-[360px] bg-surface-container/90 backdrop-blur border border-outline-variant/20 rounded-2xl p-5 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.6)]">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant/50">Rendez-vous</span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/10 border border-secondary/25 text-secondary text-[11px] font-medium">
+                <span class="material-symbols-outlined text-sm">check_circle</span>
+                Confirmé
+              </span>
+            </div>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-11 h-11 rounded-xl bg-primary-container/15 flex items-center justify-center font-headline font-bold text-primary-container">AD</div>
+              <div>
+                <div class="text-sm font-semibold text-on-surface">Dr Aïssatou Diallo</div>
+                <div class="text-xs text-on-surface-variant flex items-center gap-1">
+                  <span class="material-symbols-outlined text-sm text-primary-container">cardiology</span>
+                  Cardiologie
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-on-surface-variant bg-background/50 rounded-xl px-4 py-3">
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-base text-primary">event</span>
+                Jeudi 18 juin
+              </div>
+              <div class="w-px h-4 bg-outline-variant/30"></div>
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-base text-primary">schedule</span>
+                09:30 — 10:00
+              </div>
+            </div>
+          </div>
+
+          <!-- Carte paiement -->
+          <div class="float-2 rise rise-d4 absolute bottom-[16%] left-[2%] sm:left-[6%] w-[240px] bg-surface-container/90 backdrop-blur border border-outline-variant/20 rounded-2xl p-4 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.6)]">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-[#ff7900]/15 flex items-center justify-center flex-shrink-0">
+                <span class="w-4 h-4 rounded-full bg-[#ff7900]"></span>
+              </div>
+              <div class="min-w-0">
+                <div class="text-xs text-on-surface-variant">Paiement Orange Money</div>
+                <div class="text-sm font-headline font-bold text-on-surface">150 000 GNF</div>
+              </div>
+              <span class="material-symbols-outlined text-secondary ml-auto">task_alt</span>
+            </div>
+          </div>
+
+          <!-- Carte notification -->
+          <div class="float-3 rise rise-d5 absolute top-[2%] right-[0%] sm:right-[4%] w-[230px] bg-surface-container/90 backdrop-blur border border-outline-variant/20 rounded-2xl p-4 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.6)]">
+            <div class="flex items-start gap-3">
+              <div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-primary text-lg">notifications_active</span>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-on-surface mb-0.5">Rappel</div>
+                <div class="text-[11px] text-on-surface-variant leading-snug">Votre consultation a lieu demain à 09:30.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tracé ECG -->
+    <div class="absolute bottom-0 inset-x-0 h-24 pointer-events-none" aria-hidden="true">
+      <svg class="w-full h-full" viewBox="0 0 1200 96" preserveAspectRatio="none" fill="none">
+        <path class="ecg-path" stroke="#22d3ee" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.5"
+          d="M0,48 H260 l14,0 8,-14 10,28 12,-52 12,62 10,-38 8,14 14,0 H560 l14,0 8,-14 10,28 12,-52 12,62 10,-38 8,14 14,0 H880 l14,0 8,-14 10,28 12,-52 12,62 10,-38 8,14 14,0 H1200"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ===== Marquee des spécialités ===== -->
+  <section id="specialites" class="border-y border-outline-variant/10 bg-surface-container-low/50 py-5 overflow-hidden marquee">
+    <div class="marquee-track flex w-max items-center gap-10 px-5">
+      {% for cycle in 'xx' %}
+        {% for spec in specialites %}
+        <div class="flex items-center gap-2.5 text-on-surface-variant/70 whitespace-nowrap">
+          <span class="material-symbols-outlined text-primary-container text-xl">{{ spec.icone|default:'medical_services' }}</span>
+          <span class="text-sm font-medium">{{ spec.libelle }}</span>
+          <span class="w-1 h-1 rounded-full bg-outline-variant/40 ml-7"></span>
+        </div>
+        {% empty %}
+        <div class="flex items-center gap-2.5 text-on-surface-variant/70 whitespace-nowrap">
+          <span class="material-symbols-outlined text-primary-container text-xl">stethoscope</span>
+          <span class="text-sm font-medium">Médecine générale</span>
+        </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ===== Comment ça marche ===== -->
+  <section id="comment" class="max-w-7xl mx-auto px-5 sm:px-8 py-24 lg:py-32">
+    <div class="reveal max-w-2xl mb-16">
+      <p class="text-[11px] uppercase tracking-widest text-primary/60 mb-3">Comment ça marche</p>
+      <h2 class="font-headline font-extrabold tracking-tight text-3xl sm:text-4xl xl:text-5xl leading-tight">
+        Un rendez-vous médical en <span class="text-gradient">trois gestes.</span>
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 relative">
+      <!-- Ligne connectrice -->
+      <div class="hidden md:block absolute top-7 left-[16%] right-[16%] h-px bg-gradient-to-r from-primary-container/40 via-outline-variant/30 to-secondary/40" aria-hidden="true"></div>
+
+      <div class="reveal relative">
+        <div class="w-14 h-14 rounded-2xl bg-primary-container/15 border border-primary-container/30 flex items-center justify-center font-headline font-extrabold text-primary-container text-lg mb-6 relative z-10 bg-background">01</div>
+        <h3 class="font-headline font-bold text-lg mb-3">Choisissez votre médecin</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Parcourez les praticiens par spécialité, consultez leur profil, leur tarif
+          et leurs créneaux réellement disponibles.
+        </p>
+      </div>
+
+      <div class="reveal relative" style="transition-delay: 0.12s">
+        <div class="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center font-headline font-extrabold text-primary text-lg mb-6 relative z-10 bg-background">02</div>
+        <h3 class="font-headline font-bold text-lg mb-3">Réservez votre créneau</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Sélectionnez la date et l'heure qui vous arrangent. Le médecin confirme,
+          vous êtes notifié immédiatement — et rappelé la veille.
+        </p>
+      </div>
+
+      <div class="reveal relative" style="transition-delay: 0.24s">
+        <div class="w-14 h-14 rounded-2xl bg-secondary/10 border border-secondary/30 flex items-center justify-center font-headline font-extrabold text-secondary text-lg mb-6 relative z-10 bg-background">03</div>
+        <h3 class="font-headline font-bold text-lg mb-3">Payez par mobile money</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Réglez la consultation depuis votre téléphone avec Orange Money, MTN
+          Money ou Wave. Reçu instantané, historique conservé.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Fonctionnalités (bento) ===== -->
+  <section id="fonctionnalites" class="max-w-7xl mx-auto px-5 sm:px-8 pb-24 lg:pb-32">
+    <div class="reveal max-w-2xl mb-16">
+      <p class="text-[11px] uppercase tracking-widest text-primary/60 mb-3">Fonctionnalités</p>
+      <h2 class="font-headline font-extrabold tracking-tight text-3xl sm:text-4xl xl:text-5xl leading-tight">
+        Tout votre parcours de soin, <span class="text-gradient">au même endroit.</span>
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5">
+
+      <!-- Dossier médical — grande carte -->
+      <div class="reveal bento-card lg:col-span-4 bg-surface-container border border-outline-variant/15 rounded-2xl p-8 overflow-hidden relative">
+        <div class="absolute -right-10 -bottom-14 opacity-[0.045] pointer-events-none" aria-hidden="true">
+          <span class="material-symbols-outlined" style="font-size: 220px">clinical_notes</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-primary-container/15 flex items-center justify-center mb-6">
+          <span class="material-symbols-outlined text-primary-container text-2xl">folder_shared</span>
+        </div>
+        <h3 class="font-headline font-bold text-xl mb-3">Dossier médical numérique</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed max-w-md mb-6">
+          Antécédents, allergies, consultations, ordonnances : votre historique de
+          santé est centralisé et accessible à vous et vos médecins — à eux seuls.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-3 py-1.5 rounded-full bg-background/60 border border-outline-variant/20 text-xs text-on-surface-variant">Antécédents</span>
+          <span class="px-3 py-1.5 rounded-full bg-background/60 border border-outline-variant/20 text-xs text-on-surface-variant">Allergies</span>
+          <span class="px-3 py-1.5 rounded-full bg-background/60 border border-outline-variant/20 text-xs text-on-surface-variant">Ordonnances</span>
+          <span class="px-3 py-1.5 rounded-full bg-background/60 border border-outline-variant/20 text-xs text-on-surface-variant">Groupe sanguin</span>
+        </div>
+      </div>
+
+      <!-- Paiement mobile money -->
+      <div class="reveal bento-card lg:col-span-2 bg-surface-container border border-outline-variant/15 rounded-2xl p-8" style="transition-delay: 0.1s">
+        <div class="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mb-6">
+          <span class="material-symbols-outlined text-secondary text-2xl">contactless</span>
+        </div>
+        <h3 class="font-headline font-bold text-xl mb-3">Paiement mobile</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-6">
+          Réglez en GNF depuis votre téléphone, sans carte bancaire.
+        </p>
+        <div class="space-y-2.5">
+          <div class="flex items-center gap-2.5 text-xs text-on-surface-variant">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#ff7900]"></span> Orange Money
+          </div>
+          <div class="flex items-center gap-2.5 text-xs text-on-surface-variant">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#ffcc00]"></span> MTN Money
+          </div>
+          <div class="flex items-center gap-2.5 text-xs text-on-surface-variant">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#1dc8ff]"></span> Wave
+          </div>
+        </div>
+      </div>
+
+      <!-- Disponibilités temps réel -->
+      <div class="reveal bento-card lg:col-span-2 bg-surface-container border border-outline-variant/15 rounded-2xl p-8">
+        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
+          <span class="material-symbols-outlined text-primary text-2xl">event_available</span>
+        </div>
+        <h3 class="font-headline font-bold text-xl mb-3">Créneaux en temps réel</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Les disponibilités affichées sont celles que les médecins publient
+          eux-mêmes. Fini les allers-retours téléphoniques.
+        </p>
+      </div>
+
+      <!-- Notifications -->
+      <div class="reveal bento-card lg:col-span-2 bg-surface-container border border-outline-variant/15 rounded-2xl p-8" style="transition-delay: 0.1s">
+        <div class="w-12 h-12 rounded-xl bg-tertiary/10 flex items-center justify-center mb-6">
+          <span class="material-symbols-outlined text-tertiary text-2xl">notifications_active</span>
+        </div>
+        <h3 class="font-headline font-bold text-xl mb-3">Rappels automatiques</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Confirmation, rappel la veille, suivi après consultation : vous ne
+          manquez plus jamais un rendez-vous.
+        </p>
+      </div>
+
+      <!-- Sécurité -->
+      <div class="reveal bento-card lg:col-span-2 bg-surface-container border border-outline-variant/15 rounded-2xl p-8" style="transition-delay: 0.2s">
+        <div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center mb-6">
+          <span class="material-symbols-outlined text-error text-2xl">encrypted</span>
+        </div>
+        <h3 class="font-headline font-bold text-xl mb-3">Confidentialité stricte</h3>
+        <p class="text-sm text-on-surface-variant leading-relaxed">
+          Chaque rôle — patient, médecin, administrateur — n'accède qu'aux
+          données qui le concernent. Rien de plus.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Stats ===== -->
+  <section class="border-y border-outline-variant/10 bg-surface-container-low/40">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 py-16">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-10">
+        <div class="reveal text-center">
+          <div class="font-headline font-extrabold text-4xl sm:text-5xl text-gradient mb-2">{{ stats.medecins }}</div>
+          <div class="text-xs uppercase tracking-widest text-on-surface-variant/60">Médecins partenaires</div>
+        </div>
+        <div class="reveal text-center" style="transition-delay: 0.08s">
+          <div class="font-headline font-extrabold text-4xl sm:text-5xl text-gradient mb-2">{{ stats.specialites }}</div>
+          <div class="text-xs uppercase tracking-widest text-on-surface-variant/60">Spécialités couvertes</div>
+        </div>
+        <div class="reveal text-center" style="transition-delay: 0.16s">
+          <div class="font-headline font-extrabold text-4xl sm:text-5xl text-gradient mb-2">{{ stats.patients }}</div>
+          <div class="text-xs uppercase tracking-widest text-on-surface-variant/60">Patients suivis</div>
+        </div>
+        <div class="reveal text-center" style="transition-delay: 0.24s">
+          <div class="font-headline font-extrabold text-4xl sm:text-5xl text-gradient mb-2">{{ stats.rendez_vous }}</div>
+          <div class="text-xs uppercase tracking-widest text-on-surface-variant/60">Rendez-vous pris</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA final ===== -->
+  <section class="max-w-7xl mx-auto px-5 sm:px-8 py-24 lg:py-32">
+    <div class="reveal relative overflow-hidden rounded-3xl border border-primary-container/20 bg-surface-container medical-pattern p-10 sm:p-16 text-center">
+      <div class="absolute inset-0 hero-glow pointer-events-none" aria-hidden="true"></div>
+      <div class="relative z-10 max-w-2xl mx-auto">
+        <h2 class="font-headline font-extrabold tracking-tight text-3xl sm:text-4xl xl:text-5xl leading-tight mb-6">
+          Prenez votre santé en main <span class="text-gradient">dès aujourd'hui.</span>
+        </h2>
+        <p class="text-on-surface-variant leading-relaxed mb-10">
+          L'inscription est gratuite et ne prend qu'une minute. Votre prochain
+          rendez-vous médical est à trois clics.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <a href="{% url 'users:register' %}" class="glow-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-headline font-semibold">
+            <span class="material-symbols-outlined text-xl">person_add</span>
+            Créer mon compte gratuit
+          </a>
+          <a href="{% url 'users:login' %}" class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:text-on-surface hover:border-primary/50 transition-colors text-sm font-medium">
+            J'ai déjà un compte
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer class="border-t border-outline-variant/10">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 py-12">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-primary-container/20 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary-container text-lg">medical_services</span>
+          </div>
+          <div>
+            <div class="font-headline font-bold text-on-surface text-sm leading-tight">HealthConnect</div>
+            <div class="text-[9px] uppercase tracking-widest text-on-surface-variant/40">Le Chirurgien Numérique</div>
+          </div>
+        </div>
+        <nav class="flex items-center gap-6 text-xs text-on-surface-variant/60">
+          <a href="#fonctionnalites" class="hover:text-on-surface transition-colors">Fonctionnalités</a>
+          <a href="#comment" class="hover:text-on-surface transition-colors">Comment ça marche</a>
+          <a href="{% url 'users:login' %}" class="hover:text-on-surface transition-colors">Connexion</a>
+          <a href="{% url 'users:register' %}" class="hover:text-on-surface transition-colors">Inscription</a>
+        </nav>
+        <p class="text-[11px] text-on-surface-variant/40">© 2026 HealthConnect — Conakry, Guinée</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Navbar : fond au scroll
+    const nav = document.getElementById('nav');
+    const onScroll = () => {
+      if (window.scrollY > 24) {
+        nav.classList.add('bg-background/80', 'backdrop-blur-md', 'border-b', 'border-outline-variant/10');
+      } else {
+        nav.classList.remove('bg-background/80', 'backdrop-blur-md', 'border-b', 'border-outline-variant/10');
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    // Révélation au scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+  </script>
+</body>
+</html>

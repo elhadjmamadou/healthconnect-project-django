@@ -10,6 +10,30 @@ from .forms import LoginForm, ProfileForm, RegisterForm
 from .models import User
 
 
+class LandingView(View):
+    """Page d'accueil publique. Redirige les utilisateurs connectés vers leur dashboard."""
+
+    template_name = 'landing.html'
+
+    def get(self, request):
+        if request.user.is_authenticated:
+            return redirect('users:dashboard_redirect')
+
+        from medecins.models import Medecin, Specialite
+        from patients.models import Patient
+        from rendez_vous.models import RendezVous
+
+        return render(request, self.template_name, {
+            'specialites': Specialite.objects.order_by('libelle'),
+            'stats': {
+                'medecins': Medecin.objects.count(),
+                'specialites': Specialite.objects.count(),
+                'patients': Patient.objects.count(),
+                'rendez_vous': RendezVous.objects.count(),
+            },
+        })
+
+
 class LoginView(View):
     template_name = 'users/login.html'
 

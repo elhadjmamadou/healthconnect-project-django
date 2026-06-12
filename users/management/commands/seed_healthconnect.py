@@ -32,42 +32,42 @@ SPECIALITES = [
     {
         "libelle": "Cardiologie",
         "description": "Prise en charge des maladies cardiovasculaires, du suivi tensionnel et des bilans cardiaques.",
-        "icone": "bi-heart-pulse",
+        "icone": "cardiology",
     },
     {
         "libelle": "Dermatologie",
         "description": "Consultations de la peau, du cuir chevelu et des phaneres avec suivi des lesions chroniques.",
-        "icone": "bi-bandaid",
+        "icone": "dermatology",
     },
     {
         "libelle": "Gynecologie",
         "description": "Suivi gynecologique, depistage, consultation de fertilite et suivi hormonal.",
-        "icone": "bi-gender-female",
+        "icone": "gynecology",
     },
     {
         "libelle": "Pediatrie",
         "description": "Suivi de croissance, vaccination, pathologies courantes et surveillance du nourrisson.",
-        "icone": "bi-balloon-heart",
+        "icone": "pediatrics",
     },
     {
         "libelle": "Medecine generale",
         "description": "Premier recours, orientation clinique, suivi de pathologies chroniques et prevention.",
-        "icone": "bi-hospital",
+        "icone": "stethoscope",
     },
     {
         "libelle": "Neurologie",
         "description": "Evaluation des troubles neurologiques, migraines, neuropathies et suivi post-AVC.",
-        "icone": "bi-activity",
+        "icone": "neurology",
     },
     {
         "libelle": "Ophtalmologie",
         "description": "Troubles visuels, suivi de la pression oculaire et bilan de la vue.",
-        "icone": "bi-eye",
+        "icone": "visibility",
     },
     {
         "libelle": "ORL",
         "description": "Affections de l'oreille, du nez, de la gorge et troubles de l'audition.",
-        "icone": "bi-ear",
+        "icone": "hearing",
     },
 ]
 

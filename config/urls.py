@@ -19,7 +19,8 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.generic import RedirectView
+
+from users.views import LandingView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -32,5 +33,5 @@ urlpatterns = [
     path("paiements/", include("paiements.urls", namespace="paiements")),
     path("notifications/", include("notifications.urls", namespace="notifications")),
     path("rapports/", include("rapports.urls", namespace="rapports")),
-    path("", RedirectView.as_view(pattern_name="users:login"), name="home"),
+    path("", LandingView.as_view(), name="home"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
