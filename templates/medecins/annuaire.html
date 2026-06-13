@@ -1,0 +1,114 @@
+{% extends 'public_base.html' %}
+{% load humanize %}
+
+{% block title %}Trouver un médecin{% endblock %}
+
+{% block content %}
+
+<!-- Bandeau recherche -->
+<section class="medical-pattern border-b border-outline-variant/10" style="background: radial-gradient(ellipse 60% 100% at 50% 0%, rgba(34,211,238,0.07), transparent 70%)">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8 py-14 lg:py-20">
+    <p class="text-[11px] uppercase tracking-widest text-primary/60 mb-3">Annuaire</p>
+    <h1 class="font-headline font-extrabold tracking-tight text-3xl sm:text-4xl xl:text-5xl leading-tight mb-3">
+      Trouvez le bon médecin,<br class="hidden sm:block">
+      <span class="text-gradient-cyan">au bon moment.</span>
+    </h1>
+    <p class="text-on-surface-variant text-sm sm:text-base max-w-xl mb-8">
+      {{ total_medecins }} praticien{{ total_medecins|pluralize }} vérifié{{ total_medecins|pluralize }} —
+      consultez leurs profils, tarifs et disponibilités, puis réservez en ligne.
+    </p>
+
+    <form method="get" class="flex flex-col sm:flex-row gap-3 max-w-2xl">
+      <div class="relative flex-1">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-xl pointer-events-none">search</span>
+        <input type="search" name="q" value="{{ q }}" placeholder="Nom du médecin ou spécialité…" class="w-full !pl-12">
+      </div>
+      <select name="specialite" class="sm:w-56">
+        <option value="">Toutes les spécialités</option>
+        {% for spec in specialites %}
+        <option value="{{ spec.id }}" {% if spec_filter == spec.id|stringformat:'s' %}selected{% endif %}>{{ spec.libelle }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="glow-btn rounded-xl px-6 py-3 text-sm font-headline font-semibold flex items-center justify-center gap-2 flex-shrink-0">
+        Rechercher
+      </button>
+    </form>
+  </div>
+</section>
+
+<!-- Résultats -->
+<section class="max-w-7xl mx-auto px-5 sm:px-8 py-12">
+  {% if medecins %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    {% for medecin in medecins %}
+    <a href="{% url 'medecins:annuaire_detail' medecin.pk %}" class="group bg-surface-container border border-outline-variant/15 rounded-2xl p-6 hover:border-primary-container/40 hover:-translate-y-1 transition-all duration-200">
+      <div class="flex items-start gap-4 mb-4">
+        {% if medecin.user.photo %}
+        <img src="{{ medecin.user.photo.url }}" alt="" class="w-14 h-14 rounded-2xl object-cover flex-shrink-0">
+        {% else %}
+        <div class="w-14 h-14 rounded-2xl bg-primary-container/15 flex items-center justify-center font-headline font-bold text-primary-container text-lg flex-shrink-0">
+          {{ medecin.user.first_name|first }}{{ medecin.user.last_name|first }}
+        </div>
+        {% endif %}
+        <div class="min-w-0 flex-1">
+          <div class="font-headline font-bold text-on-surface group-hover:text-primary transition-colors">Dr {{ medecin.nom_complet }}</div>
+          <div class="text-xs text-on-surface-variant mt-0.5 truncate">{{ medecin.specialites.all|join:", "|default:"Médecine générale" }}</div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2 mb-5">
+        {% if medecin.accepte_nouveaux_patients %}
+        <span class="chip-base chip-success text-[10px]">
+          <span class="material-symbols-outlined text-xs">how_to_reg</span>
+          Accepte de nouveaux patients
+        </span>
+        {% else %}
+        <span class="chip-base chip-error text-[10px]">Patientèle complète</span>
+        {% endif %}
+        <span class="chip-base chip-info text-[10px]">{{ medecin.get_mode_exercice_display }}</span>
+      </div>
+
+      <div class="flex items-center justify-between pt-4 border-t border-outline-variant/10">
+        <div>
+          <div class="text-[10px] uppercase tracking-wide text-on-surface-variant/50">Consultation</div>
+          <div class="font-headline font-bold text-on-surface">
+            {% if medecin.tarif_consultation > 0 %}{{ medecin.tarif_consultation|floatformat:0|intcomma }} GNF{% else %}Sur demande{% endif %}
+          </div>
+        </div>
+        <span class="inline-flex items-center gap-1 text-xs text-primary font-medium">
+          Voir le profil
+          <span class="material-symbols-outlined text-base group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+        </span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+  <div class="flex items-center justify-center gap-2 mt-10">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if spec_filter %}&specialite={{ spec_filter }}{% endif %}"
+       class="w-9 h-9 rounded-xl border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:border-primary/50 transition-colors">
+      <span class="material-symbols-outlined text-lg">chevron_left</span>
+    </a>
+    {% endif %}
+    <span class="text-xs text-on-surface-variant px-3">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if spec_filter %}&specialite={{ spec_filter }}{% endif %}"
+       class="w-9 h-9 rounded-xl border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:border-primary/50 transition-colors">
+      <span class="material-symbols-outlined text-lg">chevron_right</span>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="text-center py-20 text-on-surface-variant/40">
+    <span class="material-symbols-outlined text-5xl block mb-3">person_search</span>
+    <p class="text-sm">Aucun médecin ne correspond à votre recherche.</p>
+    <a href="{% url 'medecins:annuaire' %}" class="text-primary text-sm hover:underline mt-2 inline-block">Réinitialiser les filtres</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

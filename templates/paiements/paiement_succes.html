@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Paiement réussi{% endblock %}
+{% block page_title %}Paiement réussi{% endblock %}
+{% block page_subtitle %}Votre consultation est réglée{% endblock %}
+
+{% block extra_css %}
+<style>
+  @keyframes draw-stroke { to { stroke-dashoffset: 0; } }
+  .check-circle {
+    stroke-dasharray: 290;
+    stroke-dashoffset: 290;
+    animation: draw-stroke 0.7s cubic-bezier(0.65, 0, 0.45, 1) 0.2s forwards;
+  }
+  .check-mark {
+    stroke-dasharray: 60;
+    stroke-dashoffset: 60;
+    animation: draw-stroke 0.4s cubic-bezier(0.65, 0, 0.45, 1) 0.85s forwards;
+  }
+  @keyframes pop-glow {
+    0% { box-shadow: 0 0 0 0 rgba(78, 222, 163, 0.4); }
+    100% { box-shadow: 0 0 0 36px rgba(78, 222, 163, 0); }
+  }
+  .success-halo { animation: pop-glow 1.4s ease-out 0.9s; }
+  @media (prefers-reduced-motion: reduce) {
+    .check-circle, .check-mark { animation: none; stroke-dashoffset: 0; }
+    .success-halo { animation: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-6">
+
+  <div class="bg-surface-container rounded-3xl overflow-hidden observe-animate">
+
+    <!-- En-tête succès -->
+    <div class="relative px-8 pt-12 pb-10 text-center medical-pattern">
+      <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 60% 80% at 50% 0%, rgba(78,222,163,0.10), transparent 70%)"></div>
+      <div class="success-halo relative w-24 h-24 mx-auto rounded-full bg-secondary/10 border border-secondary/25 flex items-center justify-center mb-6">
+        <svg class="w-14 h-14" viewBox="0 0 52 52" fill="none">
+          <circle class="check-circle" cx="26" cy="26" r="24" stroke="#4edea3" stroke-width="2.5"/>
+          <path class="check-mark" d="M14 27l8 8 16-17" stroke="#4edea3" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 class="relative font-headline font-extrabold text-2xl sm:text-3xl text-on-surface mb-2">Paiement réussi !</h2>
+      <p class="relative text-sm text-on-surface-variant">Votre consultation est réglée. Un reçu a été enregistré.</p>
+      <div class="relative font-headline font-extrabold text-4xl text-gradient-cyan mt-6">
+        {{ paiement.montant|floatformat:0|intcomma }} <span class="text-xl">{{ paiement.devise }}</span>
+      </div>
+    </div>
+
+    <!-- Détails -->
+    <div class="px-8 py-7 border-t border-dashed border-outline-variant/25 space-y-3.5 text-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-on-surface-variant">Référence</span>
+        <span class="text-on-surface font-mono text-xs bg-background/60 border border-outline-variant/20 rounded-lg px-2.5 py-1">{{ paiement.reference_interne }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-on-surface-variant">Transaction</span>
+        <span class="text-on-surface font-mono text-xs">{{ paiement.reference_djomy }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-on-surface-variant">Mode de paiement</span>
+        <span class="text-on-surface font-medium">{{ paiement.get_mode_paiement_display }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-on-surface-variant">Date</span>
+        <span class="text-on-surface font-medium">{{ paiement.date_paiement|date:"d/m/Y à H:i" }}</span>
+      </div>
+      {% if paiement.rendez_vous %}
+      <div class="flex items-center justify-between">
+        <span class="text-on-surface-variant">Consultation</span>
+        <span class="text-on-surface font-medium">Dr {{ paiement.rendez_vous.medecin.nom_complet }} — {{ paiement.rendez_vous.date_rdv|date:"d/m/Y" }} {{ paiement.rendez_vous.heure_debut|time:"H:i" }}</span>
+      </div>
+      {% endif %}
+      <div class="flex items-center justify-between">
+        <span class="text-on-surface-variant">Statut</span>
+        <span class="chip-base chip-success text-[11px]">
+          <span class="material-symbols-outlined text-xs icon-filled">check_circle</span>
+          {{ paiement.get_statut_paiement_display }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="px-8 pb-8 pt-2 flex flex-col sm:flex-row gap-3">
+      {% if paiement.rendez_vous %}
+      <a href="{% url 'rendez_vous:detail' paiement.rendez_vous.pk %}" class="glow-btn flex-1 inline-flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-headline font-semibold">
+        <span class="material-symbols-outlined text-lg">event</span>
+        Voir mon rendez-vous
+      </a>
+      {% endif %}
+      <a href="{% url 'paiements:detail' paiement.pk %}" class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-medium border border-outline-variant/40 text-on-surface-variant hover:text-on-surface hover:border-primary/50 transition-colors">
+        <span class="material-symbols-outlined text-lg">receipt_long</span>
+        Détail du paiement
+      </a>
+    </div>
+  </div>
+
+  <p class="text-center text-[11px] text-on-surface-variant/35 mt-5 flex items-center justify-center gap-1.5">
+    <span class="material-symbols-outlined text-sm">science</span>
+    Transaction de démonstration — aucun débit réel.
+  </p>
+</div>
+{% endblock %}

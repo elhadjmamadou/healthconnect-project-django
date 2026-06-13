@@ -126,7 +126,7 @@
           <span class="material-symbols-outlined text-primary text-xl icon-filled">monitoring</span>
           Pouls de la plateforme
         </h3>
-        <span class="text-xs text-on-surface-variant/50">30 derniers jours</span>
+        <span class="text-xs text-on-surface-variant/50">{{ activite_periode }}</span>
       </div>
       <div class="flex items-center gap-5 mb-4 text-[11px] text-on-surface-variant/70">
         <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-primary-container/70"></span>Rendez-vous</span>
@@ -144,7 +144,7 @@
           <span class="material-symbols-outlined text-secondary text-xl icon-filled">donut_small</span>
           Statuts des RDV
         </h3>
-        <span class="text-xs text-on-surface-variant/50">30 jours</span>
+        <span class="text-xs text-on-surface-variant/50">Toute la période</span>
       </div>
       <div class="relative h-64">
         <canvas id="statutsChart"></canvas>
@@ -162,7 +162,7 @@
           <span class="material-symbols-outlined text-primary text-xl icon-filled">person_add</span>
           Nouveaux patients
         </h3>
-        <span class="text-xs text-on-surface-variant/50">6 mois</span>
+        <span class="text-xs text-on-surface-variant/50">Par mois</span>
       </div>
       <div class="relative h-48">
         <canvas id="patientsChart"></canvas>
@@ -414,7 +414,7 @@ new Chart(document.getElementById('statutsChart').getContext('2d'), {
       ctx.fillText(totalStatuts.toLocaleString('fr-FR'), x, y - 2);
       ctx.font = "500 10px 'Inter', sans-serif";
       ctx.fillStyle = 'rgba(187,201,205,0.55)';
-      ctx.fillText('RDV / 30 jours', x, y + 16);
+      ctx.fillText('RDV au total', x, y + 16);
       ctx.restore();
     }
   }]

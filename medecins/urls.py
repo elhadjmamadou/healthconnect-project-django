@@ -5,6 +5,8 @@ app_name = 'medecins'
 
 urlpatterns = [
     path('dashboard/', views.DashboardMedecinView.as_view(), name='dashboard'),
+    path('annuaire/', views.AnnuaireView.as_view(), name='annuaire'),
+    path('annuaire/<int:pk>/', views.AnnuaireDetailView.as_view(), name='annuaire_detail'),
     path('', views.ListeMedecinsView.as_view(), name='liste'),
     path('creer/', views.CreerMedecinView.as_view(), name='creer'),
     path('specialites/', views.ListeSpecialitesView.as_view(), name='specialites'),

@@ -11,5 +11,8 @@ urlpatterns = [
     path('creer/<int:rdv_pk>/', views.CreerConsultationView.as_view(), name='creer'),
     path('<int:pk>/editer/', views.EditerConsultationView.as_view(), name='editer'),
     path('<int:pk>/supprimer/', views.SupprimerConsultationView.as_view(), name='supprimer'),
+    path('<int:pk>/ordonnance/', views.RedigerOrdonnanceView.as_view(), name='rediger_ordonnance'),
+    path('ordonnance/<int:pk>/pdf/', views.OrdonnancePDFView.as_view(), name='ordonnance_pdf'),
+    path('ordonnance/verifier/<uuid:token>/', views.VerifierOrdonnanceView.as_view(), name='verifier_ordonnance'),
     path('<int:pk>/', views.DetailConsultationView.as_view(), name='detail'),
 ]

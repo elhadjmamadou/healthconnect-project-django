@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Payer la consultation{% endblock %}
+{% block page_title %}Paiement{% endblock %}
+{% block page_subtitle %}Régler votre consultation{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Carte opérateur sélectionnable */
+  .operator-card { transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease; }
+  .operator-card:hover { transform: translateY(-2px); }
+  input:checked + .operator-card {
+    border-color: rgba(34, 211, 238, 0.6);
+    background: rgba(34, 211, 238, 0.06);
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.12);
+  }
+  input:checked + .operator-card .operator-check { opacity: 1; transform: scale(1); }
+  .operator-check { opacity: 0; transform: scale(0.5); transition: all 0.2s ease; }
+
+  /* Overlay de traitement */
+  #processing-overlay { backdrop-filter: blur(10px); }
+  .step-row { opacity: 0.32; transition: opacity 0.4s ease; }
+  .step-row.active { opacity: 1; }
+  .step-row .step-spinner { display: none; }
+  .step-row.active.pending .step-spinner { display: inline-block; }
+  .step-row.active.pending .step-check { display: none; }
+  .step-row .step-check { color: #4edea3; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .step-spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(138, 235, 255, 0.25);
+    border-top-color: #8aebff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  #progress-fill { transition: width 0.5s ease; }
+  @keyframes phone-buzz {
+    0%, 100% { transform: rotate(0); }
+    20% { transform: rotate(-7deg); }
+    40% { transform: rotate(7deg); }
+    60% { transform: rotate(-5deg); }
+    80% { transform: rotate(5deg); }
+  }
+  .phone-buzz { animation: phone-buzz 0.9s ease-in-out infinite; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+  <!-- Breadcrumb -->
+  <div class="flex items-center gap-2 text-sm text-on-surface-variant">
+    <a href="{% url 'rendez_vous:detail' rdv.pk %}" class="hover:text-on-surface transition-colors">Rendez-vous</a>
+    <span class="material-symbols-outlined text-base">chevron_right</span>
+    <span class="text-on-surface">Paiement</span>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+    <!-- Récapitulatif -->
+    <div class="lg:col-span-2">
+      <div class="bg-surface-container rounded-2xl p-6 sticky top-4 space-y-5">
+        <h3 class="font-headline font-semibold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-xl icon-filled">receipt_long</span>
+          Récapitulatif
+        </h3>
+
+        <div class="flex items-center gap-3 pb-5 border-b border-outline-variant/10">
+          <div class="w-12 h-12 rounded-xl bg-primary-container/15 flex items-center justify-center font-headline font-bold text-primary-container">
+            {{ rdv.medecin.user.first_name|first }}{{ rdv.medecin.user.last_name|first }}
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm font-semibold text-on-surface">Dr {{ rdv.medecin.nom_complet }}</div>
+            <div class="text-xs text-on-surface-variant truncate">{{ rdv.medecin.specialites.all|join:", "|default:"Médecine générale" }}</div>
+          </div>
+        </div>
+
+        <div class="space-y-3 text-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-on-surface-variant flex items-center gap-2">
+              <span class="material-symbols-outlined text-base text-primary">event</span> Date
+            </span>
+            <span class="text-on-surface font-medium">{{ rdv.date_rdv|date:"d/m/Y" }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-on-surface-variant flex items-center gap-2">
+              <span class="material-symbols-outlined text-base text-primary">schedule</span> Heure
+            </span>
+            <span class="text-on-surface font-medium">{{ rdv.heure_debut|time:"H:i" }} — {{ rdv.heure_fin|time:"H:i" }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-on-surface-variant flex items-center gap-2">
+              <span class="material-symbols-outlined text-base text-primary">stethoscope</span> Consultation
+            </span>
+            <span class="text-on-surface font-medium">{{ tarif|floatformat:0|intcomma }} GNF</span>
+          </div>
+        </div>
+
+        <div class="border-t border-outline-variant/10 pt-5 flex items-center justify-between">
+          <span class="text-sm text-on-surface-variant">Total à payer</span>
+          <span class="font-headline font-extrabold text-2xl text-gradient-cyan">{{ tarif|floatformat:0|intcomma }} GNF</span>
+        </div>
+
+        <div class="flex items-start gap-2 text-[11px] text-on-surface-variant/50 bg-background/40 rounded-xl px-3 py-2.5">
+          <span class="material-symbols-outlined text-sm text-secondary mt-0.5">science</span>
+          Environnement de démonstration — aucun débit réel ne sera effectué.
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulaire de paiement -->
+    <div class="lg:col-span-3">
+      <form id="payment-form" method="post" class="bg-surface-container rounded-2xl p-6 sm:p-8 space-y-7" novalidate>
+        {% csrf_token %}
+
+        <div>
+          <h3 class="font-headline font-semibold text-on-surface mb-1 flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary text-xl icon-filled">contactless</span>
+            Mode de paiement
+          </h3>
+          <p class="text-xs text-on-surface-variant/60 mb-5">Choisissez votre opérateur mobile money.</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {% for mode in modes %}
+            <label class="cursor-pointer">
+              <input type="radio" name="mode_paiement" value="{{ mode.code }}" class="sr-only" data-nom="{{ mode.nom }}" {% if forloop.first %}checked{% endif %}>
+              <div class="operator-card relative border border-outline-variant/30 rounded-2xl p-5 text-center">
+                <span class="operator-check absolute top-2.5 right-2.5 material-symbols-outlined text-primary text-lg icon-filled">check_circle</span>
+                <div class="w-12 h-12 mx-auto rounded-2xl flex items-center justify-center mb-3" style="background: {{ mode.couleur }}1f">
+                  <span class="w-5 h-5 rounded-full" style="background: {{ mode.couleur }}"></span>
+                </div>
+                <div class="text-sm font-medium text-on-surface">{{ mode.nom }}</div>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div>
+          <label for="telephone" class="block text-xs text-on-surface-variant uppercase tracking-wide mb-2">Numéro de téléphone *</label>
+          <div class="flex gap-2">
+            <span class="inline-flex items-center px-4 rounded-xl bg-background border border-outline-variant/50 text-sm text-on-surface-variant flex-shrink-0">+224</span>
+            <input type="tel" id="telephone" name="telephone" required
+                   value="{{ telephone_defaut }}"
+                   placeholder="6XX XX XX XX"
+                   inputmode="tel"
+                   class="flex-1">
+          </div>
+          <p class="text-[11px] text-on-surface-variant/50 mt-2 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">smartphone</span>
+            Une demande de validation sera envoyée sur ce numéro.
+          </p>
+        </div>
+
+        <button type="submit" class="glow-btn no-loading w-full rounded-xl py-4 font-headline font-semibold flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-xl">lock</span>
+          Payer {{ tarif|floatformat:0|intcomma }} GNF
+        </button>
+
+        <p class="text-center text-[11px] text-on-surface-variant/40 flex items-center justify-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">encrypted</span>
+          Transaction chiffrée et sécurisée
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay de traitement simulé -->
+<div id="processing-overlay" class="fixed inset-0 z-50 bg-background/80 hidden items-center justify-center p-5">
+  <div class="bg-surface-container border border-outline-variant/20 rounded-3xl p-8 sm:p-10 w-full max-w-md shadow-[0_32px_80px_-16px_rgba(0,0,0,0.8)]">
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-primary-container/12 flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-primary text-3xl phone-buzz">smartphone</span>
+      </div>
+      <h3 class="font-headline font-bold text-lg text-on-surface mb-1">Paiement en cours…</h3>
+      <p class="text-xs text-on-surface-variant" id="overlay-subtitle">Connexion à l'opérateur</p>
+    </div>
+
+    <div class="space-y-4 mb-8">
+      <div class="step-row flex items-center gap-3" data-step="1">
+        <span class="step-spinner flex-shrink-0"></span>
+        <span class="step-check material-symbols-outlined text-lg flex-shrink-0 icon-filled">check_circle</span>
+        <span class="text-sm text-on-surface">Connexion sécurisée à <span class="operator-name">l'opérateur</span></span>
+      </div>
+      <div class="step-row flex items-center gap-3" data-step="2">
+        <span class="step-spinner flex-shrink-0"></span>
+        <span class="step-check material-symbols-outlined text-lg flex-shrink-0 icon-filled">check_circle</span>
+        <span class="text-sm text-on-surface">Demande envoyée au <span class="phone-display">+224 …</span></span>
+      </div>
+      <div class="step-row flex items-center gap-3" data-step="3">
+        <span class="step-spinner flex-shrink-0"></span>
+        <span class="step-check material-symbols-outlined text-lg flex-shrink-0 icon-filled">check_circle</span>
+        <span class="text-sm text-on-surface">Confirmation de la transaction</span>
+      </div>
+    </div>
+
+    <div class="progress-bar">
+      <div id="progress-fill" class="progress-fill" style="width: 4%"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const form = document.getElementById('payment-form');
+const overlay = document.getElementById('processing-overlay');
+const fill = document.getElementById('progress-fill');
+const subtitle = document.getElementById('overlay-subtitle');
+let simulationLancee = false;
+
+form.addEventListener('submit', (e) => {
+  if (simulationLancee) return;            // 2e passage : envoi réel
+  const telephone = document.getElementById('telephone').value.trim();
+  if (!telephone) return;                  // laisse la validation native agir
+  e.preventDefault();
+  simulationLancee = true;
+
+  const mode = form.querySelector('input[name="mode_paiement"]:checked');
+  overlay.querySelectorAll('.operator-name').forEach(el => el.textContent = mode.dataset.nom);
+  overlay.querySelectorAll('.phone-display').forEach(el => el.textContent = '+224 ' + telephone);
+
+  overlay.classList.remove('hidden');
+  overlay.classList.add('flex');
+
+  const etapes = [
+    { selecteur: '[data-step="1"]', debut: 200,  fin: 1400, progres: 33, libelle: 'Connexion à ' + mode.dataset.nom },
+    { selecteur: '[data-step="2"]', debut: 1400, fin: 3000, progres: 66, libelle: 'Validation sur votre téléphone…' },
+    { selecteur: '[data-step="3"]', debut: 3000, fin: 4200, progres: 100, libelle: 'Confirmation en cours…' },
+  ];
+
+  etapes.forEach((etape) => {
+    setTimeout(() => {
+      const row = overlay.querySelector(etape.selecteur);
+      row.classList.add('active', 'pending');
+      subtitle.textContent = etape.libelle;
+      fill.style.width = etape.progres + '%';
+    }, etape.debut);
+    setTimeout(() => {
+      overlay.querySelector(etape.selecteur).classList.remove('pending');
+    }, etape.fin);
+  });
+
+  setTimeout(() => form.submit(), 4600);
+});
+</script>
+{% endblock %}

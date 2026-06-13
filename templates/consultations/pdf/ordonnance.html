@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page {
+    size: A4;
+    margin: 1.6cm 1.8cm;
+    @bottom-center {
+      content: "HealthConnect — Ordonnance {{ ordonnance.numero }} — page " counter(page) "/" counter(pages);
+      font-size: 8px;
+      color: #94a3b8;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    color: #1e293b;
+    font-size: 11px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* En-tête */
+  .entete {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2.5px solid #0e7490;
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+  }
+  .marque { font-size: 19px; font-weight: 800; color: #0e7490; letter-spacing: -0.5px; }
+  .marque-sous { font-size: 8px; text-transform: uppercase; letter-spacing: 2.5px; color: #64748b; margin-top: 2px; }
+  .numero-bloc { text-align: right; }
+  .numero { font-size: 13px; font-weight: 700; color: #0e7490; font-family: monospace; }
+  .date-emission { font-size: 9px; color: #64748b; margin-top: 3px; }
+
+  /* Médecin / patient */
+  .parties { display: flex; gap: 16px; margin-bottom: 24px; }
+  .partie {
+    flex: 1;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #f8fafc;
+  }
+  .partie-titre { font-size: 8px; text-transform: uppercase; letter-spacing: 1.5px; color: #0e7490; font-weight: 700; margin-bottom: 6px; }
+  .partie-nom { font-weight: 700; font-size: 12.5px; }
+  .partie-detail { color: #475569; font-size: 9.5px; margin-top: 2px; }
+
+  h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #0e7490;
+    border-left: 3px solid #0e7490;
+    padding-left: 8px;
+    margin: 22px 0 10px;
+  }
+
+  /* Prescription */
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left;
+    font-size: 8.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    padding: 7px 10px;
+    background: #f1f5f9;
+    border-bottom: 1.5px solid #cbd5e1;
+  }
+  td { padding: 9px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  .medicament { font-weight: 700; font-size: 11.5px; }
+  .rx { color: #0e7490; font-weight: 800; font-size: 13px; padding-right: 0; width: 18px; }
+
+  .instructions {
+    border: 1px dashed #94a3b8;
+    border-radius: 8px;
+    padding: 11px 14px;
+    background: #fffbeb;
+    color: #44403c;
+  }
+
+  /* Pied : signature + QR */
+  .pied { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 34px; }
+  .verification { display: flex; gap: 10px; align-items: center; }
+  .verification img { width: 84px; height: 84px; }
+  .verification-texte { font-size: 8px; color: #64748b; max-width: 150px; line-height: 1.5; }
+  .signature { text-align: center; min-width: 190px; }
+  .signature-ligne { border-top: 1px solid #94a3b8; margin-top: 44px; padding-top: 6px; font-size: 9px; color: #64748b; }
+  .signature-nom { font-weight: 700; font-size: 11px; color: #1e293b; }
+  .cachet {
+    display: inline-block;
+    border: 2px solid #0e7490;
+    border-radius: 6px;
+    color: #0e7490;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 4px 10px;
+    transform: rotate(-4deg);
+    opacity: 0.75;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="entete">
+    <div>
+      <div class="marque">HealthConnect</div>
+      <div class="marque-sous">Le Chirurgien Numérique — Conakry, Guinée</div>
+    </div>
+    <div class="numero-bloc">
+      <div class="numero">{{ ordonnance.numero }}</div>
+      <div class="date-emission">Émise le {{ ordonnance.date_emission|date:"d/m/Y à H:i" }}</div>
+    </div>
+  </div>
+
+  <div class="parties">
+    <div class="partie">
+      <div class="partie-titre">Médecin prescripteur</div>
+      <div class="partie-nom">Dr {{ medecin.nom_complet }}</div>
+      <div class="partie-detail">{{ medecin.specialites.all|join:", "|default:"Médecine générale" }}</div>
+      <div class="partie-detail">N° d'ordre : {{ medecin.numero_ordre|default:"—" }}</div>
+    </div>
+    <div class="partie">
+      <div class="partie-titre">Patient</div>
+      <div class="partie-nom">{{ patient.nom_complet }}</div>
+      {% if patient.age %}<div class="partie-detail">{{ patient.age }} ans{% if patient.sexe %} — {{ patient.get_sexe_display }}{% endif %}</div>{% endif %}
+      <div class="partie-detail">Dossier : {{ patient.dossier_medical.numero_dossier|default:"—" }}</div>
+    </div>
+  </div>
+
+  <h2>Prescription</h2>
+  <table>
+    <tr>
+      <th></th>
+      <th>Médicament</th>
+      <th>Posologie</th>
+      <th>Durée</th>
+    </tr>
+    {% for ligne in lignes %}
+    <tr>
+      <td class="rx">℞</td>
+      <td class="medicament">{{ ligne.medicament }}</td>
+      <td>{{ ligne.posologie|default:"—" }}</td>
+      <td>{{ ligne.duree|default:"—" }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  {% if ordonnance.instructions %}
+  <h2>Instructions</h2>
+  <div class="instructions">{{ ordonnance.instructions|linebreaksbr }}</div>
+  {% endif %}
+
+  <div class="pied">
+    <div class="verification">
+      <img src="{{ qr_data_uri }}" alt="QR de vérification">
+      <div class="verification-texte">
+        <strong>Vérifier l'authenticité</strong><br>
+        Scannez ce code ou rendez-vous sur la plateforme HealthConnect.<br>
+        Réf. {{ ordonnance.numero }}
+      </div>
+    </div>
+    <div class="signature">
+      <div class="signature-ligne">
+        <div class="signature-nom">Dr {{ medecin.nom_complet }}</div>
+        Signature et cachet
+      </div>
+      <div class="cachet">HealthConnect ✓ Document signé</div>
+    </div>
+  </div>
+
+</body>
+</html>

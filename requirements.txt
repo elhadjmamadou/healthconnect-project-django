@@ -7,4 +7,4 @@ django-crispy-forms
 crispy-bootstrap5
 whitenoise
 requests
-weasyprint==68.1
+weasyprint==68.1qrcode

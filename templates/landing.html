@@ -168,9 +168,9 @@
         </a>
 
         <nav class="hidden md:flex items-center gap-8 text-sm text-on-surface-variant">
+          <a href="{% url 'medecins:annuaire' %}" class="hover:text-on-surface transition-colors">Trouver un médecin</a>
           <a href="#fonctionnalites" class="hover:text-on-surface transition-colors">Fonctionnalités</a>
           <a href="#comment" class="hover:text-on-surface transition-colors">Comment ça marche</a>
-          <a href="#specialites" class="hover:text-on-surface transition-colors">Spécialités</a>
         </nav>
 
         <div class="flex items-center gap-3">
@@ -213,9 +213,9 @@
           </p>
 
           <div class="rise rise-d4 flex flex-col sm:flex-row gap-4 mb-12">
-            <a href="{% url 'users:register' %}" class="glow-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-headline font-semibold">
-              <span class="material-symbols-outlined text-xl">calendar_add_on</span>
-              Prendre rendez-vous
+            <a href="{% url 'medecins:annuaire' %}" class="glow-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-headline font-semibold">
+              <span class="material-symbols-outlined text-xl">person_search</span>
+              Trouver un médecin
             </a>
             <a href="#comment" class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-outline-variant/40 text-on-surface-variant hover:text-on-surface hover:border-primary/50 transition-colors text-sm font-medium">
               Découvrir la plateforme
@@ -534,8 +534,8 @@
           </div>
         </div>
         <nav class="flex items-center gap-6 text-xs text-on-surface-variant/60">
+          <a href="{% url 'medecins:annuaire' %}" class="hover:text-on-surface transition-colors">Trouver un médecin</a>
           <a href="#fonctionnalites" class="hover:text-on-surface transition-colors">Fonctionnalités</a>
-          <a href="#comment" class="hover:text-on-surface transition-colors">Comment ça marche</a>
           <a href="{% url 'users:login' %}" class="hover:text-on-surface transition-colors">Connexion</a>
           <a href="{% url 'users:register' %}" class="hover:text-on-surface transition-colors">Inscription</a>
         </nav>
